@@ -6,7 +6,7 @@ const app = express();
 const port = 3000;
 
 // Replace with your API key
-const RIOT_API_KEY = "RGAPI-b8a24256-9691-41e0-96fd-472322a554cf";
+const RIOT_API_KEY = "RGAPI-c063d099-24de-457d-8fe4-52d0637b3e51";
 
 // Serve static files
 app.use(express.static(path.join(__dirname, "public")));
