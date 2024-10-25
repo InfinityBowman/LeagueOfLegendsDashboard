@@ -199,6 +199,8 @@ function updateBarChart(data) {
         .html(`Champion: ${d.name}<br>Lane: ${lane}<br>Role: ${role}`) // Set the content
         .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
         .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+
+        d3.select(this).attr("fill", "black");
     })
     .on('mousemove', function(event) {
       tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
@@ -206,6 +208,7 @@ function updateBarChart(data) {
     })
     .on('mouseout', function() {
       tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+      d3.select(this).attr("fill", "steelblue");
     });
 
   bars.exit().remove();
@@ -295,6 +298,8 @@ function updateLineChart(data) {
         .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
         .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
         .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+
+        d3.select(this).attr("fill", "black");
     })
     .on('mousemove', function(event) {
       tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
@@ -302,6 +307,7 @@ function updateLineChart(data) {
     })
     .on('mouseout', function() {
       tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+      d3.select(this).attr("fill", "gold");
     });
   
   points.exit().remove();
@@ -382,6 +388,9 @@ function updateScatterPlot(data) {
         .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}`) // Set the content
         .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
         .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+      
+      // Change the color of the dot to black
+      d3.select(this).attr("fill", "black");
     })
     .on('mousemove', function(event) {
       tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
@@ -389,6 +398,9 @@ function updateScatterPlot(data) {
     })
     .on('mouseout', function() {
       tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+      
+      // Change the color of the dot back to crimson
+      d3.select(this).attr("fill", "crimson");
     });
 
   points
