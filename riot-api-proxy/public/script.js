@@ -38,15 +38,6 @@ function setup() {
   svgLine.append("g").attr("class", "x-axis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
   svgLine.append("g").attr("class", "y-axis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
 
-  //svg for area chart
-  svgArea = d3
-    .select("#Areachart-div")
-    .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
-    .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
-
   //svg for scatter plot
   svgScatter = d3
     .select("#Scatterplot-div")
@@ -56,7 +47,7 @@ function setup() {
     .append("g")
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
-  changeData();
+  //changeData();
 }
 
 /**
@@ -65,38 +56,11 @@ function setup() {
  */
 function update(data) {
   console.log("in update");
-  // ****** TODO ******
-
-  // Syntax for line generator.
-  // when updating the path for line chart, use the function as the input for 'd' attribute.
-  // https://github.com/d3/d3-shape/blob/main/README.md
-
-  // const lineGenerator = d3.line()
-  //   .x(d => the x coordinate for a point of the line)
-  //   .y(d => the y coordinate for a point of the line);
-
-  // Syntax for area generator.
-  // the area is bounded by upper and lower lines. So you can specify x0, x1, y0, y1 seperately. Here, since the area chart will have upper and lower sharing the x coordinates, we can just use x().
-  // Similarly, use the function as the input for 'd' attribute.
-
-  // const areaGenerator = d3.area()
-  //   .x(d => the x coordinates for upper and lower lines, both x0 and x1)
-  //   .y1(d => the y coordinate for the upper line)
-  //   .y0(d=> the base line y coordinate for the area);
-
-  //Set up scatter plot x and y axis.
-  //Since we are mapping death and case, we need new scales instead of the ones above.
-  //Cases would be the horizontal axis, so we need to use width related constants.
-  //Deaths would be vertical axis, so that would need to use height related constants.
-
-  //TODO
-  // call each update function below, adjust the input for the functions if you need to.
 
   const selectedMetric = d3.select("#metric").node().value;
   console.log(selectedMetric);
   updateBarChart(data);
   updateLineChart(data);
-  updateAreaChart(data);
   updateScatterPlot(data);
 }
 
@@ -104,20 +68,41 @@ function update(data) {
  * Update the bar chart
  */
 function updateBarChart(data) {
+  if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateBarChart");
 
-  const metric = d3.select("#metric").node().value;
+  // Extract puuidData and prepare champion frequency map
+  const puuidData = data.puuidData;
+  const championCounts = {};
+
+  // Iterate over each match to collect champion counts
+  data.singleMatchData.forEach((match) => {
+    const playerData = match.info.participants.find(
+      (participant) => participant.puuid === puuidData
+    );
+
+    if (playerData) {
+      const championName = playerData.championName;
+      championCounts[championName] = (championCounts[championName] || 0) + 1;
+    }
+  });
+
+  // Transform championCounts object into an array for D3 processing
+  const championData = Object.entries(championCounts).map(([name, count]) => ({
+    name,
+    count,
+  }));
 
   // Define axes
   const xAxis = d3
     .scaleBand()
-    .domain(data.map((d) => d.date))
+    .domain(championData.map((d) => d.name))
     .range([0, CHART_WIDTH])
     .padding(0.2);
 
   const yAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d[metric])])
+    .domain([0, d3.max(championData, (d) => d.count)])
     .range([CHART_HEIGHT, 0]);
 
   // Append x-axis
@@ -136,21 +121,21 @@ function updateBarChart(data) {
 
   // Draw the bars
   svgBar.selectAll("rect").remove();
-  const bars = svgBar.selectAll("rect").data(data);
+  const bars = svgBar.selectAll("rect").data(championData);
 
   bars
     .enter()
     .append("rect")
-    .attr("x", (d) => xAxis(d.date))
-    .attr("y", (d) => yAxis(d[metric]))
+    .attr("x", (d) => xAxis(d.name))
+    .attr("y", (d) => yAxis(d.count))
     .attr("width", xAxis.bandwidth())
-    .attr("height", (d) => CHART_HEIGHT - yAxis(d[metric]))
-    .attr("fill", "crimson");
+    .attr("height", (d) => CHART_HEIGHT - yAxis(d.count))
+    .attr("fill", "steelblue");
 
   bars
-    .attr("x", (d) => xAxis(d.date))
-    .attr("y", (d) => yAxis(d[metric]))
-    .attr("height", (d) => CHART_HEIGHT - yAxis(d[metric]));
+    .attr("x", (d) => xAxis(d.name))
+    .attr("y", (d) => yAxis(d.count))
+    .attr("height", (d) => CHART_HEIGHT - yAxis(d.count));
 
   bars.exit().remove();
 }
@@ -159,20 +144,36 @@ function updateBarChart(data) {
  * Update the line chart
  */
 function updateLineChart(data) {
+  if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateLineChart");
 
-  const metric = d3.select("#metric").node().value;
+  const puuidData = data.puuidData;
+  
+  // Collect gold/sec data for each game
+  const lineData = data.singleMatchData.map((match, index) => {
+    const playerData = match.info.participants.find(
+      (participant) => participant.puuid === puuidData
+    );
+    
+    return playerData
+      ? {
+          gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
+          goldPerSecond: playerData.goldEarned / playerData.timePlayed,
+        }
+      : null;
+  }).filter(Boolean); // Remove any null entries in case the player wasn't found
 
-  // Define axes
+  // Define x-axis as 'games ago'
   const xAxis = d3
     .scalePoint()
-    .domain(data.map((d) => d.date))
+    .domain(lineData.map((d) => d.gamesAgo))
     .range([0, CHART_WIDTH])
     .padding(0);
 
+  // Define y-axis as 'gold per second'
   const yAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d[metric])])
+    .domain([0, d3.max(lineData, (d) => d.goldPerSecond)])
     .range([CHART_HEIGHT, 0]);
 
   // Append x-axis
@@ -189,69 +190,23 @@ function updateLineChart(data) {
   svgLine.select(".y-axis").remove();
   svgLine.append("g").attr("class", "y-axis").call(d3.axisLeft(yAxis));
 
-  // Draw the lines
+  // Draw the line
   svgLine.selectAll("path.line").remove();
 
-  //line generator
+  // Line generator
   const lineGenerator = d3
     .line()
-    .x((d) => xAxis(d.date))
-    .y((d) => yAxis(d[metric]));
+    .x((d) => xAxis(d.gamesAgo))
+    .y((d) => yAxis(d.goldPerSecond));
 
   svgLine
     .append("path")
-    .datum(data)
+    .datum(lineData)
     .attr("class", "line")
     .attr("d", lineGenerator)
     .attr("fill", "none")
-    .attr("stroke", "crimson")
+    .attr("stroke", "gold")
     .attr("stroke-width", 2);
-}
-
-/**
- * Update the area chart
- */
-function updateAreaChart(data) {
-  console.log("in updateAreaChart");
-
-  const metric = d3.select("#metric").node().value;
-
-  // Define axes
-  const xAxis = d3
-    .scalePoint()
-    .domain(data.map((d) => d.date))
-    .range([0, CHART_WIDTH]);
-
-  const yAxis = d3
-    .scaleLinear()
-    .domain([0, d3.max(data, (d) => d[metric])])
-    .range([CHART_HEIGHT, 0]);
-
-  // Append x-axis
-  svgArea.select(".x-axis").remove();
-  svgArea
-    .append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0, ${CHART_HEIGHT})`)
-    .call(d3.axisBottom(xAxis))
-    .selectAll("line, path")
-    .attr("stroke", "black");
-
-  // Append y-axis
-  svgArea.select(".y-axis").remove();
-  svgArea.append("g").attr("class", "y-axis").call(d3.axisLeft(yAxis));
-
-  // Draw the area
-  svgArea.selectAll("path.area").remove();
-
-  //area generator
-  const areaGenerator = d3
-    .area()
-    .x((d) => xAxis(d.date))
-    .y1((d) => yAxis(d[metric]))
-    .y0(CHART_HEIGHT);
-
-  svgArea.append("path").datum(data).attr("class", "area").attr("d", areaGenerator).attr("fill", "crimson");
 }
 
 /**
@@ -259,21 +214,38 @@ function updateAreaChart(data) {
  */
 
 function updateScatterPlot(data) {
+  if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateScatterPlot");
 
-  // x-axis for cases
+  const puuidData = data.puuidData;
+  
+  // Collect deaths and kills data for each game
+  const scatterData = data.singleMatchData.map((match) => {
+    const playerData = match.info.participants.find(
+      (participant) => participant.puuid === puuidData
+    );
+
+    return playerData
+      ? {
+          deaths: playerData.deaths,
+          kills: playerData.kills,
+        }
+      : null;
+  }).filter(Boolean); // Remove null entries if player wasn't found
+
+  // Define x-axis for deaths
   const xAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.cases)])
+    .domain([0, d3.max(scatterData, (d) => d.deaths)])
     .range([0, CHART_WIDTH]);
 
-  //y-axis for deaths
+  // Define y-axis for kills
   const yAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.deaths)])
+    .domain([0, d3.max(scatterData, (d) => d.kills)])
     .range([CHART_HEIGHT, 0]);
 
-  //Append x-axis
+  // Append x-axis
   svgScatter.select(".x-axis").remove();
   svgScatter
     .append("g")
@@ -292,22 +264,25 @@ function updateScatterPlot(data) {
     .selectAll("line, path")
     .attr("stroke", "black");
 
-  //draw points
-  svgArea.selectAll("circle").remove();
-  const points = svgScatter.selectAll("circle").data(data);
+  // Draw points
+  svgScatter.selectAll("circle").remove();
+  const points = svgScatter.selectAll("circle").data(scatterData);
 
   points
     .enter()
     .append("circle")
-    .attr("cx", (d) => xAxis(d.cases))
-    .attr("cy", (d) => yAxis(d.deaths))
+    .attr("cx", (d) => xAxis(d.deaths))
+    .attr("cy", (d) => yAxis(d.kills))
     .attr("r", 5)
     .attr("fill", "crimson");
 
-  points.attr("cx", (d) => xAxis(d.cases)).attr("cy", (d) => yAxis(d.deaths));
+  points
+    .attr("cx", (d) => xAxis(d.deaths))
+    .attr("cy", (d) => yAxis(d.kills));
 
   points.exit().remove();
 }
+
 
 /**
  * Update the data according to document settings
@@ -383,16 +358,27 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 
 
 function displayData(data) {
-  const resultDiv = document.getElementById("result");
+  // const resultDiv = document.getElementById("result");
   console.log("display data", data);
-  resultDiv.innerHTML = `
-  <h2>puuid Information</h2>
-  <pre>${JSON.stringify(data.puuidData, null, 2)}</pre>
-    <h2>Summoner Information</h2>
-    <pre>${JSON.stringify(data.summonerData, null, 2)}</pre>
-    <h2>Match IDs</h2>
-    <pre>${JSON.stringify(data.matchIds, null, 2)}</pre>
-    <h2>Match 1</h2>
-    <pre>${JSON.stringify(data.singleMatchData, null, 2)}</pre>
-  `;
+  // resultDiv.innerHTML = `
+  // <h2>puuid Information</h2>
+  // <pre>${JSON.stringify(data.puuidData, null, 2)}</pre>
+  //   <h2>Summoner Information</h2>
+  //   <pre>${JSON.stringify(data.summonerData, null, 2)}</pre>
+  //   <h2>Match IDs</h2>
+  //   <pre>${JSON.stringify(data.matchIds, null, 2)}</pre>
+  //   <h2>Match 1</h2>
+  //   <pre>${JSON.stringify(data.singleMatchData, null, 2)}</pre>
+  // `;
+
+    // For now, we log each chart's data
+    console.log("Update Bar Chart with data:", data);
+    console.log("Update Line Chart with data:", data);
+    console.log("Update Area Chart with data:", data);
+    console.log("Update Scatter Plot with data:", data);
+  
+    // Call each update function with the API data as needed
+    updateBarChart(data);
+    updateLineChart(data);
+    updateScatterPlot(data);
 }

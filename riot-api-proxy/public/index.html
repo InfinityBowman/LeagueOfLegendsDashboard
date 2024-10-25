@@ -89,52 +89,6 @@
     <hr />
     <br />
 
-    <div class="toolbox">
-      <span>
-        <label>Dataset:</label>
-        <select id="dataset">
-          <option value="covid_us">The US</option>
-          <option selected value="covid_utah">Utah</option>
-          <option value="covid_ca">California</option>
-          <option value="covid_ny">New York</option>
-        </select>
-      </span>
-      <span>
-        <label>Data Metric</label>
-        <select id="metric">
-          <option value="deaths">Deaths</option>
-          <option value="cases">Cases</option>
-        </select>
-      </span>
-
-      <span> <input type="checkbox" id="random" /> Random Subset </span>
-    </div>
-    <br />
-
-    <div class="row chart">
-      <div class="chart">
-        <h2>Bar Charts</h2>
-        <div id="Barchart-div"></div>
-      </div>
-
-      <div class="chart">
-        <h2>Line Charts</h2>
-        <div id="Linechart-div"></div>
-      </div>
-    </div>
-
-    <div class="row chart">
-      <div class="chart">
-        <h2>Area Charts</h2>
-        <div id="Areachart-div"></div>
-      </div>
-
-      <div class="chart">
-        <h2>Scatterplot</h2>
-        <div id="Scatterplot-div"></div>
-      </div>
-    </div>
-
     <!-- New stuff here -->
     <h1>League of Legends Dashboard</h1>
     <form id="riotForm">
@@ -147,6 +101,27 @@
       <button type="submit">Submit</button>
     </form>
     <div id="result"></div>
+
+    <div class="row chart">
+      <div class="chart">
+        <h2>Heros Played</h2>
+        <div id="Barchart-div"></div>
+      </div>
+    </div>
+
+    <div class="row chart">
+      <div class="chart">
+        <h2>Gold / Second</h2>
+        <div id="Linechart-div"></div>
+      </div>
+    </div>
+
+    <div class="row chart">
+      <div class="chart">
+        <h2>Deaths to Kills</h2>
+        <div id="Scatterplot-div"></div>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>

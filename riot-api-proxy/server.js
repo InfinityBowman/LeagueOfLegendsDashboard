@@ -37,7 +37,7 @@ app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
     let matchData = [];
     for(let i = 0; i < matchResponse.data.length; i++) {
       const singleMatchResponse = await axios.get(
-        `https://americas.api.riotgames.com/lol/match/v5/matches/NA1_5137339902?api_key=${RIOT_API_KEY}`
+        `https://americas.api.riotgames.com/lol/match/v5/matches/${matchResponse.data[i]}?api_key=${RIOT_API_KEY}`
       );
       matchData.push(singleMatchResponse.data);
     }
