@@ -1,1 +1,1 @@
-Note: As we were preparing our process book for this week we noticed that the idea of a progress chart was listed in required ideas in our proposal instead of optional. We scrapped that before making the final realisation, and do not plan on implementing that in our design. Apologies for the typo.
+The Riot API for our data requires a key that resets every 24 hours. If that key has expired email zacharysealy@gmail.com for an updated commit that contains the new key.
