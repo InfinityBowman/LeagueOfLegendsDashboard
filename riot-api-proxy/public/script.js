@@ -184,6 +184,8 @@ function updateBarChart(data) {
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.count))
     .attr("fill", "steelblue")
+
+    //Chat GPT aided
     .on('mouseover', function(event, d) {
       // Find the participant data for the hovered champion
       const playerData = data.singleMatchData.find((match) =>
@@ -292,6 +294,8 @@ function updateLineChart(data) {
     .attr("cy", (d) => yAxis(d.goldPerSecond))
     .attr("r", 7)
     .attr("fill", "gold")
+
+    //Chat GPT aided
     .on('mouseover', function(event, d) {
       // Show the tooltip with y-value (gold per second)
       tooltip.style('display', 'block')
@@ -382,6 +386,8 @@ function updateScatterPlot(data) {
     .attr("cy", (d) => yAxis(d.kills))
     .attr("r", 7)
     .attr("fill", "crimson")
+
+    //Chat GPT aided
     .on('mouseover', function(event, d) {
       // Show the tooltip with kills and deaths
       tooltip.style('display', 'block')
@@ -471,15 +477,6 @@ function changeData() {
     });
 }
 
-/**
- *  Slice out a random chunk of the provided in data
- *  @param data
- */
-function randomSubset(data) {
-  console.log("in randomSubset");
-  return data.filter((d) => Math.random() > 0.5);
-}
-
 ////// Riot API Proxy Code //////
 
 document.getElementById("riotForm").addEventListener("submit", async function (event) {
@@ -514,25 +511,7 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 
 
 function displayData(data) {
-  // const resultDiv = document.getElementById("result");
   console.log("display data", data);
-  // resultDiv.innerHTML = `
-  // <h2>puuid Information</h2>
-  // <pre>${JSON.stringify(data.puuidData, null, 2)}</pre>
-  //   <h2>Summoner Information</h2>
-  //   <pre>${JSON.stringify(data.summonerData, null, 2)}</pre>
-  //   <h2>Match IDs</h2>
-  //   <pre>${JSON.stringify(data.matchIds, null, 2)}</pre>
-  //   <h2>Match 1</h2>
-  //   <pre>${JSON.stringify(data.singleMatchData, null, 2)}</pre>
-  // `;
-
-    // For now, we log each chart's data
-    console.log("Update Bar Chart with data:", data);
-    console.log("Update Line Chart with data:", data);
-    console.log("Update Area Chart with data:", data);
-    console.log("Update Scatter Plot with data:", data);
-  
     // Call each update function with the API data as needed
     updateBarChart(data);
     updateLineChart(data);
