@@ -6,6 +6,7 @@ const ANIMATION_DUATION = 300;
 
 let svgBar, svgLine, svgArea, svgScatter;
 let isDataLoaded = false, loadingData = false;
+const tooltip = d3.select('#tooltip');
 
 setup();
 
@@ -13,6 +14,7 @@ function setup() {
   console.log("in setup");
   // Fill in some d3 setting up here if you need
   // for example, svg for each chart, g for axis and shapes
+  
 
   //event listeners
   d3.select("#dataset").on("change", changeData);
@@ -120,6 +122,8 @@ function updateBarChart(data) {
   if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateBarChart");
 
+  const tooltip = d3.select('#tooltip');
+
   // Extract puuidData and prepare champion frequency map
   const puuidData = data.puuidData;
   const championCounts = {};
@@ -179,12 +183,30 @@ function updateBarChart(data) {
     .attr("y", (d) => yAxis(d.count))
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.count))
-    .attr("fill", "steelblue");
+    .attr("fill", "steelblue")
+    .on('mouseover', function(event, d) {
+      // Find the participant data for the hovered champion
+      const playerData = data.singleMatchData.find((match) =>
+        match.info.participants.some(participant => participant.championName === d.name && participant.puuid === puuidData)
+      )?.info.participants.find(participant => participant.championName === d.name);
 
-  bars
-    .attr("x", (d) => xAxis(d.name))
-    .attr("y", (d) => yAxis(d.count))
-    .attr("height", (d) => CHART_HEIGHT - yAxis(d.count));
+      // Get lane and role information
+      const lane = playerData ? playerData.lane : "Unknown lane";
+      const role = playerData ? playerData.role : "Unknown role";
+
+      // Set tooltip content
+      tooltip.style('display', 'block') // Show the tooltip
+        .html(`Champion: ${d.name}<br>Lane: ${lane}<br>Role: ${role}`) // Set the content
+        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
+        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+    })
+    .on('mousemove', function(event) {
+      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
+        .style('top', (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+    });
 
   bars.exit().remove();
 }
@@ -197,13 +219,13 @@ function updateLineChart(data) {
   console.log("in updateLineChart");
 
   const puuidData = data.puuidData;
-  
+
   // Collect gold/sec data for each game
   const lineData = data.singleMatchData.map((match, index) => {
     const playerData = match.info.participants.find(
       (participant) => participant.puuid === puuidData
     );
-    
+
     return playerData
       ? {
           gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
@@ -255,7 +277,34 @@ function updateLineChart(data) {
     .attr("d", lineGenerator)
     .attr("fill", "none")
     .attr("stroke", "gold")
-    .attr("stroke-width", 2);
+    .attr("stroke-width", 5);
+
+  // Create circles for each point on the line
+  svgLine.selectAll("circle").remove();
+  const points = svgLine.selectAll("circle").data(lineData);
+
+  points.enter()
+    .append("circle")
+    .attr("cx", (d) => xAxis(d.gamesAgo))
+    .attr("cy", (d) => yAxis(d.goldPerSecond))
+    .attr("r", 7)
+    .attr("fill", "gold")
+    .on('mouseover', function(event, d) {
+      // Show the tooltip with y-value (gold per second)
+      tooltip.style('display', 'block')
+        .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
+        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
+        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+    })
+    .on('mousemove', function(event) {
+      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
+        .style('top', (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+    });
+  
+  points.exit().remove();
 }
 
 /**
@@ -267,7 +316,7 @@ function updateScatterPlot(data) {
   console.log("in updateScatterPlot");
 
   const puuidData = data.puuidData;
-  
+
   // Collect deaths and kills data for each game
   const scatterData = data.singleMatchData.map((match) => {
     const playerData = match.info.participants.find(
@@ -313,6 +362,9 @@ function updateScatterPlot(data) {
     .selectAll("line, path")
     .attr("stroke", "black");
 
+  // Create the tooltip
+  const tooltip = d3.select('#tooltip'); // Ensure this is defined
+
   // Draw points
   svgScatter.selectAll("circle").remove();
   const points = svgScatter.selectAll("circle").data(scatterData);
@@ -322,8 +374,22 @@ function updateScatterPlot(data) {
     .append("circle")
     .attr("cx", (d) => xAxis(d.deaths))
     .attr("cy", (d) => yAxis(d.kills))
-    .attr("r", 5)
-    .attr("fill", "crimson");
+    .attr("r", 7)
+    .attr("fill", "crimson")
+    .on('mouseover', function(event, d) {
+      // Show the tooltip with kills and deaths
+      tooltip.style('display', 'block')
+        .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}`) // Set the content
+        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
+        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+    })
+    .on('mousemove', function(event) {
+      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
+        .style('top', (event.pageY - 28) + 'px');
+    })
+    .on('mouseout', function() {
+      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+    });
 
   points
     .attr("cx", (d) => xAxis(d.deaths))

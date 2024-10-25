@@ -67,6 +67,15 @@
       .loading.icon {
         display: none;
       }
+
+      .tooltip {
+        position: absolute;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 8px;
+        border-radius: 4px;
+        pointer-events: none; /* Prevent tooltip from interfering with mouse events */
+      }
     </style>
     <!-- d3 script -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -109,6 +118,7 @@
       <button type="submit">Submit</button>
     </form>
     <div id="result"></div>
+    <div id="tooltip" style="position: absolute; display: none; background: lightgray; padding: 5px; border: 1px solid black;"></div>
 
     <div class="chart section">
       <div class="row chart">
