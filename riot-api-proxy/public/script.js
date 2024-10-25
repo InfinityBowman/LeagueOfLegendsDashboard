@@ -1,10 +1,11 @@
 // Constants for the charts, that would be useful.
 const CHART_WIDTH = 450;
 const CHART_HEIGHT = 200;
-const MARGIN = { left: 30, bottom: 0, top: 20, right: 0 };
+const MARGIN = { left: 250, bottom: 0, top: 100, right: 0 };
 const ANIMATION_DUATION = 300;
 
 let svgBar, svgLine, svgArea, svgScatter;
+let isDataLoaded = false, loadingData = false;
 
 setup();
 
@@ -27,6 +28,23 @@ function setup() {
     .append("g")
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
+  // Add x-axis label for Bar Chart
+  svgBar.append("text")
+    .attr("class", "x-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("x", CHART_WIDTH / 2)
+    .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
+    .text("Champion");
+
+  // Add y-axis label for Bar Chart
+  svgBar.append("text")
+    .attr("class", "y-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("transform", `rotate(-90)`)
+    .attr("x", -CHART_HEIGHT / 2)
+    .attr("y", -30)
+    .text("Frequency");
+
   //svg for line chart
   svgLine = d3
     .select("#Linechart-div")
@@ -35,8 +53,23 @@ function setup() {
     .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
     .append("g")
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
-  svgLine.append("g").attr("class", "x-axis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
-  svgLine.append("g").attr("class", "y-axis").attr("transform", `translate(0, ${CHART_HEIGHT})`);
+
+  // Add x-axis label for Line Chart
+  svgLine.append("text")
+    .attr("class", "x-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("x", CHART_WIDTH / 2)
+    .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
+    .text("Games Ago");
+
+  // Add y-axis label for Line Chart
+  svgLine.append("text")
+    .attr("class", "y-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("transform", `rotate(-90)`)
+    .attr("x", -CHART_HEIGHT / 2)
+    .attr("y", -30)
+    .text("Gold per Second");
 
   //svg for scatter plot
   svgScatter = d3
@@ -47,7 +80,23 @@ function setup() {
     .append("g")
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
-  //changeData();
+  // Add x-axis label for Scatter Plot
+  svgScatter.append("text")
+    .attr("class", "x-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("x", CHART_WIDTH / 2)
+    .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
+    .text("Deaths");
+
+  // Add y-axis label for Scatter Plot
+  svgScatter.append("text")
+    .attr("class", "y-axis-label")
+    .attr("text-anchor", "middle")
+    .attr("transform", `rotate(-90)`)
+    .attr("x", -CHART_HEIGHT / 2)
+    .attr("y", -30)
+    .text("Kills");
+
 }
 
 /**
@@ -283,7 +332,27 @@ function updateScatterPlot(data) {
   points.exit().remove();
 }
 
+/**
+ * Toggle the chart section based on data loaded status
+ *
+ */
+function toggleChartSection() {
+  const chartSection = document.querySelector('.chart.section');
+  if (isDataLoaded) {
+    chartSection.style.display = 'block';
+  } else {
+    chartSection.style.display = 'none';
+  }
+}
 
+function toggleLoading() {
+  const loading = document.querySelector('.loading.icon');
+  if (loadingData) {
+    loading.style.display = 'block';
+  } else {
+    loading.style.display = 'none';
+  }
+}  
 /**
  * Update the data according to document settings
  */
@@ -338,6 +407,9 @@ function randomSubset(data) {
 document.getElementById("riotForm").addEventListener("submit", async function (event) {
   event.preventDefault();
 
+  loadingData = true;
+  toggleLoading();
+
   const summonerName = document.getElementById("summonerName").value;
   const tagLine = document.getElementById("tagLine").value;
 
@@ -349,10 +421,16 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
     }
     const data = await response.json();
 
+    isDataLoaded = true;
+    loadingData = false;
+    toggleLoading();
+    toggleChartSection();
     displayData(data);
     
   } catch (error) {
     document.getElementById("result").innerText = `Error: ${error.message}`;
+    loadingData = false;
+    toggleLoading();
   }
 });
 

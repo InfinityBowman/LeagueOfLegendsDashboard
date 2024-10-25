@@ -22,8 +22,8 @@
 
       svg {
         padding: 10px;
-        width: 500px;
-        height: 250px;
+        width: 1000px;
+        height: 500px;
       }
 
       /* style of bar charts */
@@ -58,6 +58,14 @@
 
       .scatter-plot .hovered {
         fill: #979696;
+      }
+
+      .chart.section {
+         display: none;
+      }
+
+      .loading.icon {
+        display: none;
       }
     </style>
     <!-- d3 script -->
@@ -102,25 +110,31 @@
     </form>
     <div id="result"></div>
 
-    <div class="row chart">
-      <div class="chart">
-        <h2>Heros Played</h2>
-        <div id="Barchart-div"></div>
+    <div class="chart section">
+      <div class="row chart">
+        <div class="chart">
+          <h2>Heros Played</h2>
+          <div id="Barchart-div"></div>
+        </div>
+      </div>
+
+      <div class="row chart">
+        <div class="chart">
+          <h2>Gold / Second</h2>
+          <div id="Linechart-div"></div>
+        </div>
+      </div>
+
+      <div class="row chart">
+        <div class="chart">
+          <h2>Deaths to Kills</h2>
+          <div id="Scatterplot-div"></div>
+        </div>
       </div>
     </div>
 
-    <div class="row chart">
-      <div class="chart">
-        <h2>Gold / Second</h2>
-        <div id="Linechart-div"></div>
-      </div>
-    </div>
-
-    <div class="row chart">
-      <div class="chart">
-        <h2>Deaths to Kills</h2>
-        <div id="Scatterplot-div"></div>
-      </div>
+    <div class="loading icon">
+      <h2>Loading...</h2>
     </div>
 
     <script src="script.js"></script>
