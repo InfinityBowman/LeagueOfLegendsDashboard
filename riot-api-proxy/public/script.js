@@ -5,8 +5,9 @@ const MARGIN = { left: 250, bottom: 0, top: 100, right: 0 };
 const ANIMATION_DUATION = 300;
 
 let svgBar, svgLine, svgArea, svgScatter;
-let isDataLoaded = false, loadingData = false;
-const tooltip = d3.select('#tooltip');
+let isDataLoaded = false,
+  loadingData = false;
+const tooltip = d3.select("#tooltip");
 
 setup();
 
@@ -14,7 +15,6 @@ function setup() {
   console.log("in setup");
   // Fill in some d3 setting up here if you need
   // for example, svg for each chart, g for axis and shapes
-  
 
   //event listeners
   d3.select("#dataset").on("change", changeData);
@@ -31,21 +31,25 @@ function setup() {
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
   // Add x-axis label for Bar Chart
-  svgBar.append("text")
+  svgBar
+    .append("text")
     .attr("class", "x-axis-label")
     .attr("text-anchor", "middle")
     .attr("x", CHART_WIDTH / 2)
     .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
-    .text("Champion");
+    .text("Champion")
+    .style("fill", "white");
 
   // Add y-axis label for Bar Chart
-  svgBar.append("text")
+  svgBar
+    .append("text")
     .attr("class", "y-axis-label")
     .attr("text-anchor", "middle")
     .attr("transform", `rotate(-90)`)
     .attr("x", -CHART_HEIGHT / 2)
     .attr("y", -30)
-    .text("Frequency");
+    .text("Frequency")
+    .style("fill", "white");
 
   //svg for line chart
   svgLine = d3
@@ -57,21 +61,25 @@ function setup() {
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
   // Add x-axis label for Line Chart
-  svgLine.append("text")
+  svgLine
+    .append("text")
     .attr("class", "x-axis-label")
     .attr("text-anchor", "middle")
     .attr("x", CHART_WIDTH / 2)
     .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
-    .text("Games Ago");
+    .text("Games Ago")
+    .style("fill", "white");
 
   // Add y-axis label for Line Chart
-  svgLine.append("text")
+  svgLine
+    .append("text")
     .attr("class", "y-axis-label")
     .attr("text-anchor", "middle")
     .attr("transform", `rotate(-90)`)
     .attr("x", -CHART_HEIGHT / 2)
     .attr("y", -30)
-    .text("Gold per Second");
+    .text("Gold per Second")
+    .style("fill", "white");
 
   //svg for scatter plot
   svgScatter = d3
@@ -83,22 +91,25 @@ function setup() {
     .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
 
   // Add x-axis label for Scatter Plot
-  svgScatter.append("text")
+  svgScatter
+    .append("text")
     .attr("class", "x-axis-label")
     .attr("text-anchor", "middle")
     .attr("x", CHART_WIDTH / 2)
     .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
-    .text("Deaths");
+    .text("Deaths")
+    .style("fill", "white");
 
   // Add y-axis label for Scatter Plot
-  svgScatter.append("text")
+  svgScatter
+    .append("text")
     .attr("class", "y-axis-label")
     .attr("text-anchor", "middle")
     .attr("transform", `rotate(-90)`)
     .attr("x", -CHART_HEIGHT / 2)
     .attr("y", -30)
-    .text("Kills");
-
+    .text("Kills")
+    .style("fill", "white");
 }
 
 /**
@@ -122,7 +133,7 @@ function updateBarChart(data) {
   if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateBarChart");
 
-  const tooltip = d3.select('#tooltip');
+  const tooltip = d3.select("#tooltip");
 
   // Extract puuidData and prepare champion frequency map
   const puuidData = data.puuidData;
@@ -130,9 +141,7 @@ function updateBarChart(data) {
 
   // Iterate over each match to collect champion counts
   data.singleMatchData.forEach((match) => {
-    const playerData = match.info.participants.find(
-      (participant) => participant.puuid === puuidData
-    );
+    const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
     if (playerData) {
       const championName = playerData.championName;
@@ -166,7 +175,7 @@ function updateBarChart(data) {
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xAxis))
     .selectAll("line, path")
-    .attr("stroke", "black");
+    .attr("stroke", "white");
 
   // Append y-axis
   svgBar.select(".y-axis").remove();
@@ -186,30 +195,42 @@ function updateBarChart(data) {
     .attr("fill", "steelblue")
 
     //Chat GPT aided
-    .on('mouseover', function(event, d) {
+    .on("mouseover", function (event, d) {
       // Find the participant data for the hovered champion
-      const playerData = data.singleMatchData.find((match) =>
-        match.info.participants.some(participant => participant.championName === d.name && participant.puuid === puuidData)
-      )?.info.participants.find(participant => participant.championName === d.name);
+      const playerData = data.singleMatchData
+        .find((match) =>
+          match.info.participants.some(
+            (participant) => participant.championName === d.name && participant.puuid === puuidData
+          )
+        )
+        ?.info.participants.find((participant) => participant.championName === d.name);
 
       // Get lane and role information
       const lane = playerData ? playerData.lane : "Unknown lane";
       const role = playerData ? playerData.role : "Unknown role";
 
       // Set tooltip content
-      tooltip.style('display', 'block') // Show the tooltip
+      tooltip
+        .style("display", "block") // Show the tooltip
         .html(`Champion: ${d.name}<br>Lane: ${lane}<br>Role: ${role}`) // Set the content
-        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
-        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
+        .style("top", event.pageY - 28 + "px") // Position above the cursor
+        .style("border-radius", "6px")
+        .style("padding", "5px")
+        .style("background-color", "#2f2f2f");
 
-        d3.select(this).attr("fill", "black");
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
     })
-    .on('mousemove', function(event) {
-      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
-        .style('top', (event.pageY - 28) + 'px');
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
     })
-    .on('mouseout', function() {
-      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+    .on("mouseout", function () {
+      tooltip.style("display", "none"); // Hide the tooltip on mouse out
       d3.select(this).attr("fill", "steelblue");
     });
 
@@ -226,18 +247,18 @@ function updateLineChart(data) {
   const puuidData = data.puuidData;
 
   // Collect gold/sec data for each game
-  const lineData = data.singleMatchData.map((match, index) => {
-    const playerData = match.info.participants.find(
-      (participant) => participant.puuid === puuidData
-    );
+  const lineData = data.singleMatchData
+    .map((match, index) => {
+      const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
-    return playerData
-      ? {
-          gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
-          goldPerSecond: playerData.goldEarned / playerData.timePlayed,
-        }
-      : null;
-  }).filter(Boolean); // Remove any null entries in case the player wasn't found
+      return playerData
+        ? {
+            gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
+            goldPerSecond: playerData.goldEarned / playerData.timePlayed,
+          }
+        : null;
+    })
+    .filter(Boolean); // Remove any null entries in case the player wasn't found
 
   // Define x-axis as 'games ago'
   const xAxis = d3
@@ -260,7 +281,7 @@ function updateLineChart(data) {
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xAxis))
     .selectAll("line, path")
-    .attr("stroke", "black");
+    .attr("stroke", "white");
 
   // Append y-axis
   svgLine.select(".y-axis").remove();
@@ -288,7 +309,8 @@ function updateLineChart(data) {
   svgLine.selectAll("circle").remove();
   const points = svgLine.selectAll("circle").data(lineData);
 
-  points.enter()
+  points
+    .enter()
     .append("circle")
     .attr("cx", (d) => xAxis(d.gamesAgo))
     .attr("cy", (d) => yAxis(d.goldPerSecond))
@@ -296,24 +318,30 @@ function updateLineChart(data) {
     .attr("fill", "gold")
 
     //Chat GPT aided
-    .on('mouseover', function(event, d) {
+    .on("mouseover", function (event, d) {
       // Show the tooltip with y-value (gold per second)
-      tooltip.style('display', 'block')
+      console.log("d", d);
+      tooltip
+        .style("display", "block")
         .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
-        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
-        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
+        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
+        .style("top", event.pageY - 28 + "px"); // Position above the cursor
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
 
-        d3.select(this).attr("fill", "black");
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
     })
-    .on('mousemove', function(event) {
-      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
-        .style('top', (event.pageY - 28) + 'px');
-    })
-    .on('mouseout', function() {
-      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
+    .on("mouseout", function () {
+      tooltip.style("display", "none"); // Hide the tooltip on mouse out
       d3.select(this).attr("fill", "gold");
     });
-  
+
   points.exit().remove();
 }
 
@@ -328,18 +356,18 @@ function updateScatterPlot(data) {
   const puuidData = data.puuidData;
 
   // Collect deaths and kills data for each game
-  const scatterData = data.singleMatchData.map((match) => {
-    const playerData = match.info.participants.find(
-      (participant) => participant.puuid === puuidData
-    );
+  const scatterData = data.singleMatchData
+    .map((match) => {
+      const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
-    return playerData
-      ? {
-          deaths: playerData.deaths,
-          kills: playerData.kills,
-        }
-      : null;
-  }).filter(Boolean); // Remove null entries if player wasn't found
+      return playerData
+        ? {
+            deaths: playerData.deaths,
+            kills: playerData.kills,
+          }
+        : null;
+    })
+    .filter(Boolean); // Remove null entries if player wasn't found
 
   // Define x-axis for deaths
   const xAxis = d3
@@ -361,7 +389,7 @@ function updateScatterPlot(data) {
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xAxis))
     .selectAll("line, path")
-    .attr("stroke", "black");
+    .attr("stroke", "white");
 
   // Append y-axis
   svgScatter.select(".y-axis").remove();
@@ -370,10 +398,10 @@ function updateScatterPlot(data) {
     .attr("class", "y-axis")
     .call(d3.axisLeft(yAxis))
     .selectAll("line, path")
-    .attr("stroke", "black");
+    .attr("stroke", "white");
 
   // Create the tooltip
-  const tooltip = d3.select('#tooltip'); // Ensure this is defined
+  const tooltip = d3.select("#tooltip"); // Ensure this is defined
 
   // Draw points
   svgScatter.selectAll("circle").remove();
@@ -388,30 +416,33 @@ function updateScatterPlot(data) {
     .attr("fill", "crimson")
 
     //Chat GPT aided
-    .on('mouseover', function(event, d) {
+    .on("mouseover", function (event, d) {
       // Show the tooltip with kills and deaths
-      tooltip.style('display', 'block')
+      tooltip
+        .style("display", "block")
         .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}`) // Set the content
-        .style('left', (event.pageX + 5) + 'px') // Position tooltip next to the cursor
-        .style('top', (event.pageY - 28) + 'px'); // Position above the cursor
-      
-      // Change the color of the dot to black
-      d3.select(this).attr("fill", "black");
+        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
+        .style("top", event.pageY - 28 + "px"); // Position above the cursor
+
+      // Change the color of the dot to lighter
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
     })
-    .on('mousemove', function(event) {
-      tooltip.style('left', (event.pageX + 5) + 'px') // Update position on move
-        .style('top', (event.pageY - 28) + 'px');
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
     })
-    .on('mouseout', function() {
-      tooltip.style('display', 'none'); // Hide the tooltip on mouse out
-      
+    .on("mouseout", function () {
+      tooltip.style("display", "none"); // Hide the tooltip on mouse out
+
       // Change the color of the dot back to crimson
       d3.select(this).attr("fill", "crimson");
     });
 
-  points
-    .attr("cx", (d) => xAxis(d.deaths))
-    .attr("cy", (d) => yAxis(d.kills));
+  points.attr("cx", (d) => xAxis(d.deaths)).attr("cy", (d) => yAxis(d.kills));
 
   points.exit().remove();
 }
@@ -421,22 +452,22 @@ function updateScatterPlot(data) {
  *
  */
 function toggleChartSection() {
-  const chartSection = document.querySelector('.chart.section');
+  const chartSection = document.querySelector(".chart.section");
   if (isDataLoaded) {
-    chartSection.style.display = 'block';
+    chartSection.style.display = "block";
   } else {
-    chartSection.style.display = 'none';
+    chartSection.style.display = "none";
   }
 }
 
 function toggleLoading() {
-  const loading = document.querySelector('.loading.icon');
+  const loading = document.querySelector(".loading.icon");
   if (loadingData) {
-    loading.style.display = 'block';
+    loading.style.display = "block";
   } else {
-    loading.style.display = 'none';
+    loading.style.display = "none";
   }
-}  
+}
 /**
  * Update the data according to document settings
  */
@@ -501,7 +532,6 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
     toggleLoading();
     toggleChartSection();
     displayData(data);
-    
   } catch (error) {
     document.getElementById("result").innerText = `Error: ${error.message}`;
     loadingData = false;
@@ -509,11 +539,10 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
   }
 });
 
-
 function displayData(data) {
   console.log("display data", data);
-    // Call each update function with the API data as needed
-    updateBarChart(data);
-    updateLineChart(data);
-    updateScatterPlot(data);
+  // Call each update function with the API data as needed
+  updateBarChart(data);
+  updateLineChart(data);
+  updateScatterPlot(data);
 }
