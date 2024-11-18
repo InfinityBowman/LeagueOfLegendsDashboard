@@ -31,11 +31,11 @@ app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
 
     // Fetch match data using the puuid
     const matchResponse = await axios.get(
-      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${RIOT_API_KEY}`
+      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=10&api_key=${RIOT_API_KEY}`
     );
     console.log("matchResponse", matchResponse.data[0]);
     let matchData = [];
-    for(let i = 0; i < matchResponse.data.length; i++) {
+    for (let i = 0; i < matchResponse.data.length; i++) {
       const singleMatchResponse = await axios.get(
         `https://americas.api.riotgames.com/lol/match/v5/matches/${matchResponse.data[i]}?api_key=${RIOT_API_KEY}`
       );
@@ -48,7 +48,7 @@ app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
       singleMatchData: matchData,
     });
   } catch (error) {
-    console.error("Error fetching data from Riot API:", error.message);
+    console.error("Error fetching data from Riot API:", error.message, error.response.headers);
     res.status(500).send("Error fetching data from Riot API");
   }
 });
