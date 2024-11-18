@@ -22,7 +22,7 @@ function setup() {
   d3.select("#random").on("change", changeData);
 
   //svg for bar chart
-  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${-20})`);
+  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -46,13 +46,7 @@ function setup() {
     .style("fill", "white");
 
   //svg for line chart
-  svgLine = d3
-    .select("#Linechart-div")
-    .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
-    .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
+  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -79,10 +73,8 @@ function setup() {
   svgScatter = d3
     .select("#Scatterplot-div")
     .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
     .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
+    .attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Scatter Plot
   svgScatter

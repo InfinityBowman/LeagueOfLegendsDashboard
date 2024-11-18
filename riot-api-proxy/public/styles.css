@@ -52,6 +52,7 @@ input {
 h2 {
   text-align: center;
   color: white;
+  background: transparent;
 }
 
 .row {
@@ -66,7 +67,7 @@ h2 {
 svg {
   padding: 10px;
   width: 800px;
-  height: 500px;
+  height: 300px;
 }
 
 .chart {
