@@ -98,7 +98,7 @@ function setup() {
     .style("fill", "white");
 
   // svg for calendar heatmap
-  svgHeatmap = d3.select("#CalendarHeatmap-div").append("svg").attr("transform", `translate(0, -30)`).append("g");
+  svgHeatmap = d3.select("#CalendarHeatmap-div").append("svg").attr("transform", `translate(0, -20)`).append("g");
 }
 
 /**
@@ -479,7 +479,7 @@ function updateHeatmap(data) {
       ([key, values]) => ({ key, values })
     ).reverse();
 
-    const cellSize = 20;
+    const cellSize = 22;
     const yearHeight = cellSize * 7;
 
     const group = svg.append("g");
