@@ -52,6 +52,7 @@ input {
 h2 {
   text-align: center;
   color: white;
+  background: transparent;
 }
 
 .row {
@@ -65,8 +66,13 @@ h2 {
 
 svg {
   padding: 10px;
-  width: 1000px;
-  height: 500px;
+  width: 800px;
+  height: 300px;
+}
+
+.chart {
+  display: flex;
+  flex-direction: row;
 }
 
 /* style of bar charts */
@@ -136,4 +142,27 @@ text {
 
 .y-axis .tick text {
   fill: white;
+}
+
+.scaled {
+  stroke-width: 2px; /* Change stroke width on hover */
+  transition: transform 0.2s;
+}
+
+#CalendarHeatmap-div {
+  display: flex;
+  flex-direction: column;
+}
+#Activity-title-div {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: transparent;
+}
+#Activity-title-p {
+  padding-right: 10px;
+}
+#Activity-desc-p {
+  font-size: 14px;
+  color: #c4c4c4;
 }

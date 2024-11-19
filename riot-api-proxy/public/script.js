@@ -22,13 +22,7 @@ function setup() {
   d3.select("#random").on("change", changeData);
 
   //svg for bar chart
-  svgBar = d3
-    .select("#Barchart-div")
-    .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
-    .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
+  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -52,13 +46,7 @@ function setup() {
     .style("fill", "white");
 
   //svg for line chart
-  svgLine = d3
-    .select("#Linechart-div")
-    .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
-    .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
+  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -85,10 +73,8 @@ function setup() {
   svgScatter = d3
     .select("#Scatterplot-div")
     .append("svg")
-    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
     .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${MARGIN.top})`);
+    .attr("transform", `translate(${MARGIN.left}, ${10})`);
 
   // Add x-axis label for Scatter Plot
   svgScatter
@@ -110,6 +96,9 @@ function setup() {
     .attr("y", -30)
     .text("Kills")
     .style("fill", "white");
+
+  // svg for calendar heatmap
+  svgHeatmap = d3.select("#CalendarHeatmap-div").append("svg").attr("transform", `translate(0, -20)`).append("g");
 }
 
 /**
@@ -124,6 +113,7 @@ function update(data) {
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
+  updateHeatmap(data);
 }
 
 /**
@@ -454,6 +444,275 @@ function updateScatterPlot(data) {
 }
 
 /**
+ * update the calendar heatmap.
+ */
+function updateHeatmap(data) {
+  if (!data || data.singleMatchData.length === 0) return;
+  console.log("in updateHeatmap");
+
+  const heatmapData = d3
+    .rollups(
+      data.singleMatchData,
+      (matches) => {
+        const wins = matches.filter(
+          (match) => match.info.participants.find((participant) => participant.puuid === data.puuidData).win
+        ).length;
+        const losses = matches.length - wins;
+        return { wins, losses };
+      },
+      (match) => new Date(match.info.gameCreation).toDateString()
+    )
+    .map(([date, { wins, losses }]) => ({
+      Date: new Date(date).toISOString().split("T")[0], // Format date as YYYY-MM-DD
+      wins: wins.toString(),
+      losses: losses.toString(),
+    }));
+
+  // Labels of row and columns -> unique identifier of the column called 'group' and 'variable'
+  sample = heatmapData.sort((a, b) => new Date(a.Date) - new Date(b.Date));
+
+  const dateValues = sample.map((dv) => ({
+    date: d3.timeDay(new Date(dv.Date)),
+    wins: Number(dv.wins),
+    losses: Number(dv.losses),
+  }));
+
+  const svg = svgHeatmap;
+
+  function draw() {
+    const years = Array.from(
+      d3.group(dateValues, (d) => d.date.getUTCFullYear()),
+      ([key, values]) => ({ key, values })
+    ).reverse();
+
+    const cellSize = 22;
+    const yearHeight = cellSize * 7;
+
+    const group = svg.append("g");
+
+    const year = group
+      .selectAll("g")
+      .data(years)
+      .join("g")
+      .attr("transform", (d, i) => `translate(50, ${yearHeight * i + cellSize * 1.5})`);
+
+    const formatDay = (d) => ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][d.getUTCDay()];
+    const countDay = (d) => d.getUTCDay();
+    const timeWeek = d3.utcSunday;
+    const formatDate = d3.utcFormat("%x");
+    const colorFn = d3
+      .scaleThreshold()
+      .domain([0.49, 0.51, 0.75]) // Define thresholds for the categories
+      .range(["#e54787", "white", "#1dc49b", "#85d0ff"]); // Define colors for the categories
+
+    const format = (value) => {
+      const formattedValue = d3.format(".1%")(value);
+      return formattedValue.replace(/\.0+%$/, "%");
+    };
+
+    year
+      .append("g")
+      .attr("text-anchor", "end")
+      .selectAll("text")
+      .data(d3.range(7).map((i) => new Date(1995, 0, i)))
+      .join("text")
+      .attr("x", -5)
+      .attr("y", (d) => (countDay(d) + 0.5) * cellSize)
+      .attr("dy", "0.31em")
+      .attr("font-size", 12)
+      .style("fill", "white")
+      .text(formatDay);
+
+    // Create a tooltip div
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("font-size", 10)
+      .style("position", "absolute")
+      .style("background", "2f2f2f")
+      .style("color", "white")
+      .style("padding", "10px")
+      .style("border", "1px solid #aac8e4")
+      .style("border-radius", "5px")
+      .style("pointer-events", "none")
+      .style("opacity", 0);
+
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+    // Generate a complete list of dates within the range
+    const allDates = [];
+    for (let d = new Date(twoMonthsAgo); d <= new Date(); d.setDate(d.getDate() + 1)) {
+      allDates.push(new Date(d));
+    }
+
+    // Merge the complete list of dates with existing data
+    const completeData = allDates.map((date) => {
+      const existingData = dateValues.find((d) => d3.timeDay(d.date).getTime() === d3.timeDay(date).getTime());
+      return existingData ? existingData : { date, wins: null, losses: null };
+    });
+
+    const formatMonth = d3.timeFormat("%b"); // Format for abbreviated month name
+
+    // Get the unique months from the data
+    const uniqueMonths = Array.from(new Set(completeData.map((d) => d.date.getMonth()))).sort((a, b) => a - b);
+
+    year
+      .append("g")
+      .attr("text-anchor", "middle")
+      .selectAll("text")
+      .data(uniqueMonths.map((month) => new Date(1995, month, 1))) // Use unique months as data
+      .join("text")
+      .attr("x", (d, i) => (i + 0.5) * cellSize * 4) // Position the text elements horizontally
+      .attr("y", -10) // Position the text elements on top
+      .attr("dy", "0.31em")
+      .attr("font-size", 12)
+      .style("fill", "white")
+      .text(formatMonth);
+
+    year
+      .append("g")
+      .selectAll("rect")
+      .data((d) => completeData)
+      .join("rect")
+      .attr("width", cellSize - 3)
+      .attr("height", cellSize - 3)
+      .attr("x", (d, i) => timeWeek.count(twoMonthsAgo, d.date) * cellSize + 10)
+      .attr("y", (d) => countDay(d.date) * cellSize + 0.5)
+      .attr("fill", (d) => (d.wins != null ? colorFn(d.wins / (d.wins + d.losses)) : "#333333"))
+      .attr("stroke", (d) => (d.wins != null ? colorFn(d.wins / (d.wins + d.losses)) : "#333333"))
+      .attr("stroke-width", "0px")
+      .attr("opacity", (d) => {
+        const totalGames = d.wins + d.losses;
+        if (totalGames >= 7) {
+          return 1; // Highest opacity
+        } else if (totalGames >= 5) {
+          return 0.8;
+        } else if (totalGames >= 3) {
+          return 0.6;
+        } else if (totalGames > 0) {
+          return 0.4;
+        } else {
+          return 1; // Lowest opacity for no games
+        }
+      })
+      .attr("rx", 2) // Rounded Corners
+      .attr("ry", 2)
+      .on("mouseover", function (event, d) {
+        // Hover effect
+        if (d.wins + d.losses === 0) return;
+        d3.select(this).classed("scaled", true);
+        tooltip.transition().duration(50).style("opacity", 0.9);
+        tooltip
+          .html(() => {
+            const winRate = d.wins / (d.wins + d.losses);
+            return `Date: ${formatDate(d.date)}<br>Win Rate: ${format(winRate)}<br>Record: ${d.wins} - ${d.losses}`;
+          })
+          .style("left", event.pageX + 10 + "px")
+          .style("top", event.pageY - 28 + "px");
+      })
+      .on("mouseout", function () {
+        // End hover effect
+        d3.select(this).classed("scaled", false);
+        tooltip.transition().duration(300).style("opacity", 0);
+      });
+
+    const legend = group.append("g").attr("transform", `translate(10, ${years.length * yearHeight + cellSize * 4})`);
+
+    // Set the bottom legend and on click toggles
+    const names = ["bad day", "", "", "good day"];
+    const bounds = [0, 49, 51, 75];
+    const boundMaxes = [49, 51, 75, 100];
+    const categoriesCount = 4;
+    const categories = [...Array(categoriesCount)].map((_, i) => {
+      const name = names[i];
+      const bound = bounds[i];
+      const boundMax = boundMaxes[i];
+
+      return {
+        name,
+        bound,
+        boundMax,
+        color: colorFn(bound / 100),
+        selected: true,
+      };
+    });
+
+    const legendWidth = 50;
+    const legendMargin = 5;
+
+    function toggle(legend) {
+      const { bound, boundMax, selected } = legend.srcElement.__data__;
+
+      legend.srcElement.__data__.selected = !selected;
+
+      d3.select(legend.srcElement)
+        .transition()
+        .duration(200)
+        .style("fill-opacity", legend.srcElement.__data__.selected ? 1 : 0.6);
+
+      const highlightedDates = years.map((y) => {
+        const filteredValues = y.values.filter((v) => {
+          const winRate = v.wins / (v.wins + v.losses);
+          const isInBound = winRate > bound / 100 && winRate <= boundMax / 100;
+          return isInBound;
+        });
+        return {
+          key: y.key,
+          values: filteredValues,
+        };
+      });
+
+      year
+        .data(highlightedDates)
+        .selectAll("rect")
+        .data(
+          (d) => d.values,
+          (d) => d.date
+        )
+        .transition()
+        .duration(400)
+        .attr("fill", (d) => (legend.srcElement.__data__.selected ? colorFn(d.wins / (d.wins + d.losses)) : "grey"));
+    }
+
+    legend
+      .selectAll("rect")
+      .data(categories)
+      .enter()
+      .append("rect")
+      .attr("fill", (d) => d.color)
+      .attr("x", (d, i) => i * (legendWidth + legendMargin)) // Adjust x position to include margin
+      .attr("width", legendWidth)
+      .attr("height", 15)
+      .attr("rx", 2) // Set x-axis radius for rounded corners
+      .attr("ry", 2) // Set y-axis radius for rounded corners;
+      .on("click", toggle);
+
+    legend
+      .selectAll("text")
+      .data(categories)
+      .join("text")
+      .attr("x", (d, i) => i * (legendWidth + legendMargin))
+      .attr("y", 30) // Set a constant y position
+      .attr("text-anchor", "start")
+      .attr("font-size", 11)
+      .style("fill", "white")
+      .text((d) => `${d.name}`);
+
+    legend
+      .append("text")
+      .attr("dy", -5)
+      .attr("font-size", 14)
+      .style("fill", "white")
+      .attr("text-decoration", "underline")
+      .text("Click on category to select/deselect days");
+  }
+
+  draw();
+}
+
+/**
  * Toggle the chart section based on data loaded status
  *
  */
@@ -551,4 +810,5 @@ function displayData(data) {
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
+  updateHeatmap(data);
 }
