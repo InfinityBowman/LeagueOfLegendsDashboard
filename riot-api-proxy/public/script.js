@@ -213,13 +213,31 @@ function updateBarChart(data) {
   // Add tooltip functionality to both sections
   bars
     .on("mouseover", function (event, d) {
+      const playerData = data.singleMatchData
+        .find((match) =>
+          match.info.participants.some(
+            (participant) => participant.championName === d.name && participant.puuid === puuidData
+          )
+        )
+        ?.info.participants.find((participant) => participant.championName === d.name);
+
+      const lane = playerData ? playerData.lane : "Unknown lane";
+      const role = playerData ? playerData.role : "Unknown role";  
       tooltip
         .style("display", "block")
         .html(
-          `${d.name}<br>Lane: ${d.lane}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`
+          `${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`
         )
         .style("left", event.pageX + 5 + "px")
-        .style("top", event.pageY - 28 + "px");
+        .style("top", event.pageY - 28 + "px")
+        .style("background", "dimgray")
+        .style("border", "1px solid white");
+
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
+
     })
     .on("mousemove", function (event) {
       tooltip
@@ -297,8 +315,8 @@ function updateLineChart(data) {
     .attr("class", "line")
     .attr("d", lineGenerator)
     .attr("fill", "none")
-    .attr("stroke", "gold")
-    .attr("stroke-width", 5);
+    .attr("stroke", "white")
+    .attr("stroke-width", 2);
 
   // Create circles for each point on the line
   svgLine.selectAll("circle").remove();
@@ -321,16 +339,16 @@ function updateLineChart(data) {
         .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
         .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
         .style("top", event.pageY - 28 + "px"); // Position above the cursor
-    })
-    .on("mousemove", function (event) {
-      tooltip
-        .style("left", event.pageX + 5 + "px") // Update position on move
-        .style("top", event.pageY - 28 + "px");
 
       d3.select(this).attr("fill", function () {
         const color = d3.color(d3.select(this).attr("fill")).brighter(1);
         return color;
       });
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
