@@ -130,32 +130,40 @@ function update(data) {
  * Update the bar chart
  */
 function updateBarChart(data) {
+  //Chat GPT aided
+
   if (!data || data.singleMatchData.length === 0) return;
   console.log("in updateBarChart");
 
   const tooltip = d3.select("#tooltip");
 
-  // Extract puuidData and prepare champion frequency map
   const puuidData = data.puuidData;
   const championCounts = {};
 
-  // Iterate over each match to collect champion counts
+  // Create an object to track wins and losses for each champion
   data.singleMatchData.forEach((match) => {
     const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
     if (playerData) {
       const championName = playerData.championName;
-      championCounts[championName] = (championCounts[championName] || 0) + 1;
+      if (!championCounts[championName]) {
+        championCounts[championName] = { wins: 0, losses: 0 };
+      }
+      if (playerData.win) {
+        championCounts[championName].wins += 1;
+      } else {
+        championCounts[championName].losses += 1;
+      }
     }
   });
 
-  // Transform championCounts object into an array for D3 processing
-  const championData = Object.entries(championCounts).map(([name, count]) => ({
+  // Transform championCounts into an array
+  const championData = Object.entries(championCounts).map(([name, counts]) => ({
     name,
-    count,
+    wins: counts.wins,
+    losses: counts.losses,
   }));
 
-  // Define axes
   const xAxis = d3
     .scaleBand()
     .domain(championData.map((d) => d.name))
@@ -164,10 +172,9 @@ function updateBarChart(data) {
 
   const yAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(championData, (d) => d.count)])
+    .domain([0, d3.max(championData, (d) => d.wins + d.losses)]) // Scale based on total games
     .range([CHART_HEIGHT, 0]);
 
-  // Append x-axis
   svgBar.select(".x-axis").remove();
   svgBar
     .append("g")
@@ -177,64 +184,61 @@ function updateBarChart(data) {
     .selectAll("line, path")
     .attr("stroke", "white");
 
-  // Append y-axis
   svgBar.select(".y-axis").remove();
   svgBar.append("g").attr("class", "y-axis").call(d3.axisLeft(yAxis));
 
-  // Draw the bars
-  svgBar.selectAll("rect").remove();
-  const bars = svgBar.selectAll("rect").data(championData);
-
-  bars
+  svgBar.selectAll("g.bar-group").remove();
+  const bars = svgBar
+    .selectAll("g.bar-group")
+    .data(championData)
     .enter()
+    .append("g")
+    .attr("class", "bar-group")
+    .attr("transform", (d) => `translate(${xAxis(d.name)}, 0)`);
+
+  // Append losses bars
+  bars
     .append("rect")
-    .attr("x", (d) => xAxis(d.name))
-    .attr("y", (d) => yAxis(d.count))
+    .attr("class", "loss-bar")
+    .attr("x", 0)
+    .attr("y", (d) => yAxis(d.losses))
     .attr("width", xAxis.bandwidth())
-    .attr("height", (d) => CHART_HEIGHT - yAxis(d.count))
-    .attr("fill", "steelblue")
+    .attr("height", (d) => CHART_HEIGHT - yAxis(d.losses))
+    .attr("fill", "crimson")
+    .attr("stroke", "white")
+    .attr("stroke-width", 1);
 
-    //Chat GPT aided
+  // Append wins bars on top of losses
+  bars
+    .append("rect")
+    .attr("class", "win-bar")
+    .attr("x", 0)
+    .attr("y", (d) => yAxis(d.losses + d.wins))
+    .attr("width", xAxis.bandwidth())
+    .attr("height", (d) => CHART_HEIGHT - yAxis(d.wins))
+    .attr("fill", "green")
+    .attr("stroke", "white")
+    .attr("stroke-width", 1);
+
+  // Add tooltip functionality to both sections
+  bars
     .on("mouseover", function (event, d) {
-      // Find the participant data for the hovered champion
-      const playerData = data.singleMatchData
-        .find((match) =>
-          match.info.participants.some(
-            (participant) => participant.championName === d.name && participant.puuid === puuidData
-          )
-        )
-        ?.info.participants.find((participant) => participant.championName === d.name);
-
-      // Get lane and role information
-      const lane = playerData ? playerData.lane : "Unknown lane";
-      const role = playerData ? playerData.role : "Unknown role";
-
-      // Set tooltip content
       tooltip
-        .style("display", "block") // Show the tooltip
-        .html(`Champion: ${d.name}<br>Lane: ${lane}<br>Role: ${role}`) // Set the content
-        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
-        .style("top", event.pageY - 28 + "px") // Position above the cursor
-        .style("border-radius", "6px")
-        .style("padding", "5px")
-        .style("background-color", "#2f2f2f");
-
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+        .style("display", "block")
+        .html(
+          `${d.name}<br>Lane: ${d.lane}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`
+        )
+        .style("left", event.pageX + 5 + "px")
+        .style("top", event.pageY - 28 + "px");
     })
     .on("mousemove", function (event) {
       tooltip
-        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("left", event.pageX + 5 + "px")
         .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip.style("display", "none"); // Hide the tooltip on mouse out
-      d3.select(this).attr("fill", "steelblue");
+      tooltip.style("display", "none");
     });
-
-  bars.exit().remove();
 }
 
 /**
@@ -255,6 +259,7 @@ function updateLineChart(data) {
         ? {
             gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
             goldPerSecond: playerData.goldEarned / playerData.timePlayed,
+            win: playerData.win,
           }
         : null;
     })
@@ -315,7 +320,7 @@ function updateLineChart(data) {
     .attr("cx", (d) => xAxis(d.gamesAgo))
     .attr("cy", (d) => yAxis(d.goldPerSecond))
     .attr("r", 7)
-    .attr("fill", "gold")
+    .attr("fill", d => d.win ? "green" : "crimson")
 
     //Chat GPT aided
     .on("mouseover", function (event, d) {
@@ -339,7 +344,7 @@ function updateLineChart(data) {
     })
     .on("mouseout", function () {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
-      d3.select(this).attr("fill", "gold");
+      d3.select(this).attr("fill", d => d.win ? "green" : "crimson");
     });
 
   points.exit().remove();
@@ -364,6 +369,7 @@ function updateScatterPlot(data) {
         ? {
             deaths: playerData.deaths,
             kills: playerData.kills,
+            win: playerData.win,
           }
         : null;
     })
@@ -413,14 +419,14 @@ function updateScatterPlot(data) {
     .attr("cx", (d) => xAxis(d.deaths))
     .attr("cy", (d) => yAxis(d.kills))
     .attr("r", 7)
-    .attr("fill", "crimson")
+    .attr("fill", d => d.win ? "green" : "crimson")
 
     //Chat GPT aided
     .on("mouseover", function (event, d) {
       // Show the tooltip with kills and deaths
       tooltip
         .style("display", "block")
-        .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}`) // Set the content
+        .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}<br>Win: ${d.win}`) // Set the content
         .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
         .style("top", event.pageY - 28 + "px"); // Position above the cursor
 
@@ -439,7 +445,7 @@ function updateScatterPlot(data) {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
 
       // Change the color of the dot back to crimson
-      d3.select(this).attr("fill", "crimson");
+      d3.select(this).attr("fill", d => d.win ? "green" : "crimson");
     });
 
   points.attr("cx", (d) => xAxis(d.deaths)).attr("cy", (d) => yAxis(d.kills));
