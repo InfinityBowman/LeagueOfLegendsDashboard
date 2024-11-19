@@ -9,17 +9,21 @@ let isDataLoaded = false,
   loadingData = false;
 const tooltip = d3.select("#tooltip");
 
+const matches = [];
+let selectedMatch = null;
+
+let globalData = null;
+let matchIdMap = new Map();
+
 setup();
 
 function setup() {
-  console.log("in setup");
   // Fill in some d3 setting up here if you need
   // for example, svg for each chart, g for axis and shapes
 
   //event listeners
-  d3.select("#dataset").on("change", changeData);
-  d3.select("#metric").on("change", changeData);
-  d3.select("#random").on("change", changeData);
+  d3.select("#matchSelect").on("change", changeSelectedMatch);
+  document.addEventListener('DOMContentLoaded', fillMatchDropdown);
 
   //svg for bar chart
   svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
@@ -30,7 +34,7 @@ function setup() {
     .attr("class", "x-axis-label")
     .attr("text-anchor", "middle")
     .attr("x", CHART_WIDTH / 2)
-    .attr("y", CHART_HEIGHT + MARGIN.bottom + 50)
+    .attr("y", CHART_HEIGHT + MARGIN.bottom + 60)
     .text("Champion")
     .style("fill", "white");
 
@@ -106,10 +110,8 @@ function setup() {
  * @param data
  */
 function update(data) {
-  console.log("in update");
 
   const selectedMetric = d3.select("#metric").node().value;
-  console.log(selectedMetric);
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
@@ -123,7 +125,6 @@ function updateBarChart(data) {
   //Chat GPT aided
 
   if (!data || data.singleMatchData.length === 0) return;
-  console.log("in updateBarChart");
 
   const tooltip = d3.select("#tooltip");
 
@@ -171,6 +172,9 @@ function updateBarChart(data) {
     .attr("class", "x-axis")
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xAxis))
+    .selectAll("text")
+    .attr("transform", "rotate(-45)")
+    .style("text-anchor", "end")
     .selectAll("line, path")
     .attr("stroke", "white");
 
@@ -194,7 +198,7 @@ function updateBarChart(data) {
     .attr("y", (d) => yAxis(d.losses))
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.losses))
-    .attr("fill", "crimson")
+    .attr("fill", "#e54787")
     .attr("stroke", "white")
     .attr("stroke-width", 1);
 
@@ -206,7 +210,7 @@ function updateBarChart(data) {
     .attr("y", (d) => yAxis(d.losses + d.wins))
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.wins))
-    .attr("fill", "green")
+    .attr("fill", "#85d0ff")
     .attr("stroke", "white")
     .attr("stroke-width", 1);
 
@@ -233,10 +237,10 @@ function updateBarChart(data) {
         .style("background", "dimgray")
         .style("border", "1px solid white");
 
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+        d3.select(this).attr("fill", function () {
+          const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+          return color;
+        });
 
     })
     .on("mousemove", function (event) {
@@ -254,7 +258,6 @@ function updateBarChart(data) {
  */
 function updateLineChart(data) {
   if (!data || data.singleMatchData.length === 0) return;
-  console.log("in updateLineChart");
 
   const puuidData = data.puuidData;
 
@@ -268,6 +271,7 @@ function updateLineChart(data) {
             gamesAgo: data.singleMatchData.length - index, // index + 1 games ago, reversed
             goldPerSecond: playerData.goldEarned / playerData.timePlayed,
             win: playerData.win,
+            gameId: data.singleMatchData[index].info.gameId,
           }
         : null;
     })
@@ -293,6 +297,11 @@ function updateLineChart(data) {
     .attr("class", "x-axis")
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xAxis))
+    // .selectAll("text")
+    // .attr("transform", "rotate(-45)")
+    // .style("text-anchor", "end")
+    //only show odd numbers
+    
     .selectAll("line, path")
     .attr("stroke", "white");
 
@@ -328,22 +337,30 @@ function updateLineChart(data) {
     .attr("cx", (d) => xAxis(d.gamesAgo))
     .attr("cy", (d) => yAxis(d.goldPerSecond))
     .attr("r", 7)
-    .attr("fill", d => d.win ? "green" : "crimson")
+    .attr("fill", function(data){
+      if(data.gameId === selectedMatch){
+        return "gold";
+      }
+      else{
+        return data.win ? "#85d0ff" : "#e54787";
+      }
+    })
 
     //Chat GPT aided
     .on("mouseover", function (event, d) {
       // Show the tooltip with y-value (gold per second)
-      console.log("d", d);
       tooltip
         .style("display", "block")
         .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
         .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
-        .style("top", event.pageY - 28 + "px"); // Position above the cursor
+        .style("top", event.pageY - 28 + "px") // Position above the cursor
+        .style("background", "dimgray")
+        .style("border", "1px solid white");
 
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+        d3.select(this).attr("fill", function () {
+          const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+          return color;
+        });
     })
     .on("mousemove", function (event) {
       tooltip
@@ -352,7 +369,14 @@ function updateLineChart(data) {
     })
     .on("mouseout", function () {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
-      d3.select(this).attr("fill", d => d.win ? "green" : "crimson");
+      d3.select(this).attr("fill", function(data){
+        if(data.gameId === selectedMatch){
+          return "gold";
+        }
+        else{
+          return data.win ? "#85d0ff" : "#e54787";
+        }
+      });
     });
 
   points.exit().remove();
@@ -364,7 +388,6 @@ function updateLineChart(data) {
 
 function updateScatterPlot(data) {
   if (!data || data.singleMatchData.length === 0) return;
-  console.log("in updateScatterPlot");
 
   const puuidData = data.puuidData;
 
@@ -378,6 +401,7 @@ function updateScatterPlot(data) {
             deaths: playerData.deaths,
             kills: playerData.kills,
             win: playerData.win,
+            gameId: match.info.gameId,
           }
         : null;
     })
@@ -427,7 +451,14 @@ function updateScatterPlot(data) {
     .attr("cx", (d) => xAxis(d.deaths))
     .attr("cy", (d) => yAxis(d.kills))
     .attr("r", 7)
-    .attr("fill", d => d.win ? "green" : "crimson")
+    .attr("fill", function(data){
+      if(data.gameId === selectedMatch){
+        return "gold";
+      }
+      else{
+        return data.win ? "#85d0ff" : "#e54787";
+      }
+    })
 
     //Chat GPT aided
     .on("mouseover", function (event, d) {
@@ -436,7 +467,9 @@ function updateScatterPlot(data) {
         .style("display", "block")
         .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}<br>Win: ${d.win}`) // Set the content
         .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
-        .style("top", event.pageY - 28 + "px"); // Position above the cursor
+        .style("top", event.pageY - 28 + "px") // Position above the cursor
+        .style("background", "dimgray")
+        .style("border", "1px solid white");
 
       // Change the color of the dot to lighter
       d3.select(this).attr("fill", function () {
@@ -452,8 +485,15 @@ function updateScatterPlot(data) {
     .on("mouseout", function () {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
 
-      // Change the color of the dot back to crimson
-      d3.select(this).attr("fill", d => d.win ? "green" : "crimson");
+      // Change the color of the dot back
+      d3.select(this).attr("fill", function(data){
+        if(data.gameId === selectedMatch){
+          return "gold";
+        }
+        else{
+          return data.win ? "#85d0ff" : "#e54787";
+        }
+      });
     });
 
   points.attr("cx", (d) => xAxis(d.deaths)).attr("cy", (d) => yAxis(d.kills));
@@ -466,7 +506,6 @@ function updateScatterPlot(data) {
  */
 function updateHeatmap(data) {
   if (!data || data.singleMatchData.length === 0) return;
-  console.log("in updateHeatmap");
 
   const heatmapData = d3
     .rollups(
@@ -752,43 +791,22 @@ function toggleLoading() {
   }
 }
 /**
- * Update the data according to document settings
+ * Update the data
  */
-function changeData() {
-  console.log("in changeData");
-  //  Load the file indicated by the select menu
-  const dataFile = d3.select("#dataset").property("value");
+function changeSelectedMatch() {
+  let value = document.getElementById("matchSelect").value;
 
-  d3.csv(`data/${dataFile}.csv`)
-    .then((dataOutput) => {
-      /**
-       * D3 loads all CSV data as strings. While Javascript is pretty smart
-       * about interpreting strings as numbers when you do things like
-       * multiplication, it will still treat them as strings where it makes
-       * sense (e.g. adding strings will concatenate them, not add the values
-       * together, or comparing strings will do string comparison, not numeric
-       * comparison).
-       *
-       * We need to explicitly convert values to numbers so that comparisons work
-       * when we call d3.max()
-       **/
-      console.log("data output", dataOutput);
-      const dataResult = dataOutput.map((d) => ({
-        cases: parseInt(d.cases),
-        deaths: parseInt(d.deaths),
-        date: d3.timeFormat("%m/%d")(d3.timeParse("%d-%b")(d.date)),
-      }));
-      if (document.getElementById("random").checked) {
-        // if random subset is selected
-        update(randomSubset(dataResult));
-      } else {
-        update(dataResult);
-      }
-    })
-    .catch((e) => {
-      console.log(e);
-      alert("Error!");
-    });
+  //replace - with space
+  value = value.replace(/-/g, ' ');
+  //lookup match id
+  selectedMatch = matchIdMap.get(value);
+
+  console.log("selectedMatch", selectedMatch);
+
+  updateBarChart(globalData);
+  updateLineChart(globalData);
+  updateScatterPlot(globalData);
+  updateHeatmap(globalData);
 }
 
 ////// Riot API Proxy Code //////
@@ -814,6 +832,7 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
     loadingData = false;
     toggleLoading();
     toggleChartSection();
+    globalData = data;
     displayData(data);
   } catch (error) {
     document.getElementById("result").innerText = `Error: ${error.message}`;
@@ -829,4 +848,43 @@ function displayData(data) {
   updateLineChart(data);
   updateScatterPlot(data);
   updateHeatmap(data);
+
+  matches.push("Select a match");
+
+  //find self puuid
+  const puuid = data.puuidData;
+
+
+  for(let i = 0; i < data.singleMatchData.length; i++) {
+    //find self in the match
+    const playerData = data.singleMatchData[i].info.participants.find((participant) => participant.puuid === puuid);
+
+    //create string
+    let value = playerData.championName + " " + data.singleMatchData[i].info.gameMode + " "+ new Date (data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString()
+    matchIdMap.set(value.toLowerCase(), data.singleMatchData[i].info.gameId);
+    matches.push(value);
+  }
+
+  console.log("matches", matches);
+
+  //match selector
+  fillMatchDropdown();
 }
+
+
+// method for match selector dropdown
+function fillMatchDropdown() {
+  console.log("in populateDropdown");
+  const selector = document.getElementById('matchSelect');
+
+  selector.innerHTML = '';
+
+  console.log("matches in populate", matches);
+  matches.forEach(option => {
+    const match = document.createElement('option');
+    match.value = option.toLowerCase().replace(/\s+/g, '-'); // Format the value
+    match.textContent = option; // Set the visible text
+    selector.appendChild(match);
+  });
+}
+

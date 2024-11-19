@@ -31,7 +31,7 @@ app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
 
     // Fetch match data using the puuid
     const matchResponse = await axios.get(
-      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=10&api_key=${RIOT_API_KEY}`
+      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${RIOT_API_KEY}`
     );
     console.log("matchResponse", matchResponse.data[0]);
     let matchData = [];
