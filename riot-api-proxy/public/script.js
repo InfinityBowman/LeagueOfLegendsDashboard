@@ -4,7 +4,7 @@ const CHART_HEIGHT = 200;
 const MARGIN = { left: 250, bottom: 0, top: 100, right: 0 };
 const ANIMATION_DUATION = 300;
 
-let svgBar, svgLine, svgArea, svgScatter;
+let svgBar, svgLine, svgArea, svgScatter, svgHeatmap, svgDualBar;
 let isDataLoaded = false,
   loadingData = false;
 const tooltip = d3.select("#tooltip");
@@ -26,7 +26,7 @@ function setup() {
   document.addEventListener("DOMContentLoaded", fillMatchDropdown);
 
   //svg for bar chart
-  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
+  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -50,7 +50,7 @@ function setup() {
     .style("fill", "white");
 
   //svg for line chart
-  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
+  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -78,7 +78,7 @@ function setup() {
     .select("#Scatterplot-div")
     .append("svg")
     .append("g")
-    .attr("transform", `translate(${MARGIN.left}, ${10})`);
+    .attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
 
   // Add x-axis label for Scatter Plot
   svgScatter
@@ -103,6 +103,13 @@ function setup() {
 
   // svg for calendar heatmap
   svgHeatmap = d3.select("#CalendarHeatmap-div").append("svg").attr("transform", `translate(0, -20)`).append("g");
+
+  svgDualBar = d3.select("#DualBarChart-div")
+  .append("svg")
+  .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
+  .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
+  .append("g") // Add a group to handle transformations
+  .attr("transform", `translate(${0}, ${MARGIN.top-50})`);
 }
 
 /**
@@ -115,6 +122,7 @@ function update(data) {
   updateLineChart(data);
   updateScatterPlot(data);
   updateHeatmap(data);
+  updateDualBarChart(data);
 }
 
 /**
@@ -234,10 +242,10 @@ function updateBarChart(data) {
         .style("background", "dimgray")
         .style("border", "1px solid white");
 
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+      // d3.select(this).attr("fill", function () {
+      //   const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+      //   return color;
+      // });
     })
     .on("mousemove", function (event) {
       tooltip.style("left", event.pageX + 5 + "px").style("top", event.pageY - 28 + "px");
@@ -496,7 +504,6 @@ function updateScatterPlot(data) {
  */
 function updateHeatmap(data) {
   if (!data || data.singleMatchData.length === 0) return;
-  console.log("heatmap", data);
   const heatmapData = d3
     .rollups(
       data.singleMatchData,
@@ -759,6 +766,235 @@ function updateHeatmap(data) {
   draw();
 }
 
+function updateDualBarChart(data) {
+  console.log("updateDualBarChart in");
+  
+  let dataSelf, dataOpponent;
+
+  //averages data
+  if(selectedMatch == null) {
+    // Calculate averages
+    const puuid = data.puuidData;
+
+    playerTotals = new Map();
+    opponentTotals = new Map();
+    
+    for(let i = 0; i < data.singleMatchData.length; i++)
+    {
+      //get player data
+      const match = data.singleMatchData[i];
+      const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
+
+      //find opponent w/ matching lane
+      const opponentData = match.info.participants.find((participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid);
+
+      //add player data
+      for (let [key, value] of Object.entries(playerData)) {
+        if (playerTotals.has(key)) {
+          playerTotals.set(key, playerTotals.get(key) + value);
+        } else {
+          playerTotals.set(key, value);
+        }
+      }
+
+      //add opponent data
+      for (let [key, value] of Object.entries(opponentData)) {
+        if (opponentTotals.has(key)) {
+          opponentTotals.set(key, opponentTotals.get(key) + value);
+        } else {
+          opponentTotals.set(key, value);
+        }
+      }
+    }
+
+    //calculate averages
+    for (let [key, value] of playerTotals) {
+      playerTotals.set(key, value / data.singleMatchData.length);
+    }
+
+    for (let [key, value] of opponentTotals) {
+      opponentTotals.set(key, value / data.singleMatchData.length);
+    }
+
+    dataSelf = [
+      {label: "Kills", value: playerTotals.get("kills")},
+      {label: "Assists", value: playerTotals.get("assists")},
+      {label: "Deaths", value: playerTotals.get("deaths")},
+      {label: "Damage Taken", value: playerTotals.get("totalDamageTaken")},
+      {label: "Total Damage", value: playerTotals.get("totalDamageDealt")},
+      {label: "Gold Earned", value: playerTotals.get("goldEarned")},
+      {label: "Minion Kills", value: playerTotals.get("totalMinionsKilled")},
+      {label: "Time Dead", value: playerTotals.get("totalTimeSpentDead")},
+    ];
+
+    dataOpponent = [
+      {label: "Kills", value: opponentTotals.get("kills")},
+      {label: "Assists", value: opponentTotals.get("assists")},
+      {label: "Deaths", value: opponentTotals.get("deaths")},
+      {label: "Damage Taken", value: opponentTotals.get("totalDamageTaken")},
+      {label: "Total Damage", value: opponentTotals.get("totalDamageDealt")},
+      {label: "Gold Earned", value: opponentTotals.get("goldEarned")},
+      {label: "Minion Kills", value: opponentTotals.get("totalMinionsKilled")},
+      {label: "Time Dead", value: opponentTotals.get("totalTimeSpentDead")},
+    ];
+  }
+  //specific match data
+  else {
+    const match = data.singleMatchData.find((match) => match.info.gameId === selectedMatch);
+    const puuid = data.puuidData;
+    const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
+    dataSelf = [
+      {label: "Kills", value: playerData.kills},
+      {label: "Assists", value: playerData.assists},
+      {label: "Deaths", value: playerData.deaths},
+      {label: "Damage Taken", value: playerData.totalDamageTaken},
+      {label: "Total Damage", value: playerData.totalDamageDealt},
+      {label: "Gold Earned", value: playerData.goldEarned},
+      {label: "Minion Kills", value: playerData.totalMinionsKilled},
+      {label: "Time Dead", value: playerData.totalTimeSpentDead},
+    ];
+
+    //find opponent
+    const opponentData = match.info.participants.find((participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid);
+    dataOpponent = [
+      {label: "Kills", value: opponentData.kills},
+      {label: "Assists", value: opponentData.assists},
+      {label: "Deaths", value: opponentData.deaths},
+      {label: "Damage Taken", value: opponentData.totalDamageTaken},
+      {label: "Total Damage", value: opponentData.totalDamageDealt},
+      {label: "Gold Earned", value: opponentData.goldEarned},
+      {label: "Minion Kills", value: opponentData.totalMinionsKilled},
+      {label: "Time Dead", value: opponentData.totalTimeSpentDead},
+    ];
+  }
+
+  //selected match data
+  let dataExample = [
+    { label: "Kills", value: 50 },
+    { label: "Deaths", value: 30 },
+    { label: "Assists", value: 70 },
+    { label: "Damage", value: 90 },
+    { label: "Healing", value: 20 },
+    { label: "Gold", value: 60 },
+    { label: "Vision", value: 40 },
+    { label: "Objectives", value: 80 },
+  ];
+  
+  // dataSelf = [
+  //   { label: "Kills", value: 50 },
+  //   { label: "Deaths", value: 30 },
+  //   { label: "Assists", value: 70 },
+  //   { label: "Damage", value: 90 },
+  //   { label: "Healing", value: 20 },
+  //   { label: "Gold", value: 60 },
+  //   { label: "Vision", value: 40 },
+  //   { label: "Objectives", value: 80 },
+  // ];
+  
+  // dataOpponent = [
+  //   { label: "Kills", value: 70 },
+  //   { label: "Deaths", value: 40 },
+  //   { label: "Assists", value: 60 },
+  //   { label: "Damage", value: 80 },
+  //   { label: "Healing", value: 30 },
+  //   { label: "Gold", value: 50 },
+  //   { label: "Vision", value: 60 },
+  //   { label: "Objectives", value: 70 },
+  // ];
+
+  //chat gpt aided in generation, improvements by us
+
+  // Ensure both datasets are compatible
+  if (dataSelf.length !== dataOpponent.length || !dataSelf.every((d, i) => d.label === dataOpponent[i].label)) {
+    console.error("Data arrays are not compatible.");
+    return;
+  }
+
+  // Calculate percentages
+  const map = dataSelf.map((d1, i) => {
+    const d2 = dataOpponent[i];
+    const total = d1.value + d2.value;
+    return {
+      label: d1.label,
+      top: (d2.value / total) * 100, // Orange bar (top)
+      bottom: (d1.value / total) * 100, // Blue bar (bottom)
+    };
+  });
+
+  // Clear existing chart elements
+  svgDualBar.selectAll("*").remove();
+
+  // Add a group element for the chart
+  const chartGroup = svgDualBar;
+
+  // Define scales, axes, and chart elements
+  const xScale = d3.scaleBand()
+    .domain(map.map(d => d.label))
+    .range([0, CHART_WIDTH])
+    .padding(0.2);
+
+  const yScale = d3.scaleLinear()
+    .domain([0, 100])
+    .range([CHART_HEIGHT, 0]);
+
+  // Add top x-axis
+  chartGroup.append("g")
+    .attr("transform", `translate(0, 0)`)
+    .call(d3.axisTop(xScale).tickSize(0))
+    .selectAll("text")
+    .style("fill", "white");
+
+  // Add bottom x-axis
+  chartGroup.append("g")
+    .attr("transform", `translate(0, ${CHART_HEIGHT})`)
+    .call(d3.axisBottom(xScale).tickSize(0))
+    .selectAll("text")
+    .style("fill", "white");
+
+  // Add dashed line at 50%
+  chartGroup.append("line")
+    .attr("x1", 0)
+    .attr("x2", CHART_WIDTH)
+    .attr("y1", yScale(50))
+    .attr("y2", yScale(50))
+    .attr("stroke", "white")
+    .attr("stroke-dasharray", "4");
+
+  // Render the blue bars (bottom)
+  chartGroup.selectAll(".bar-bottom")
+    .data(map)
+    .enter()
+    .append("rect")
+    .attr("class", "bar-bottom")
+    .attr("x", d => xScale(d.label))
+    .attr("y", d => yScale(d.bottom))
+    .attr("width", xScale.bandwidth())
+    .attr("height", d => yScale(0) - yScale(d.bottom))
+    .attr("fill", "#85d0ff")
+    .attr("opacity", 0.6)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .attr("stroke-opacity", .9);
+
+  // Render the orange bars (top)
+  chartGroup.selectAll(".bar-top")
+    .data(map)
+    .enter()
+    .append("rect")
+    .attr("class", "bar-top")
+    .attr("x", d => xScale(d.label))
+    .attr("y", 0) // Start from the top axis
+    .attr("width", xScale.bandwidth())
+    .attr("height", d => yScale(0) - yScale(d.top))
+    .attr("fill", "#e54787")
+    .attr("opacity", 0.6)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .attr("stroke-opacity", .9);
+
+  console.log("updateDualBarChart out");
+}
+
 /**
  * Toggle the chart section based on data loaded status
  *
@@ -796,7 +1032,9 @@ function changeSelectedMatch() {
   updateBarChart(globalData);
   updateLineChart(globalData);
   updateScatterPlot(globalData);
-  //updateHeatmap(globalData);
+  // updateHeatmap(globalData);
+  updateDualBarChart(globalData);
+
 }
 
 ////// Riot API Proxy Code //////
@@ -837,10 +1075,12 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 
 function displayData(data) {
   // Call each update function with the API data as needed
+  console.log("data", data);
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
   updateHeatmap(data);
+  updateDualBarChart(data);
 
   matches.push("Select a match");
 
@@ -862,7 +1102,6 @@ function displayData(data) {
     matches.push(value);
   }
 
-  console.log("matches", matches);
 
   //match selector
   fillMatchDropdown();
@@ -870,12 +1109,10 @@ function displayData(data) {
 
 // method for match selector dropdown
 function fillMatchDropdown() {
-  console.log("in populateDropdown");
   const selector = document.getElementById("matchSelect");
 
   selector.innerHTML = "";
 
-  console.log("matches in populate", matches);
   matches.forEach((option) => {
     const match = document.createElement("option");
     match.value = option.toLowerCase().replace(/\s+/g, "-"); // Format the value
