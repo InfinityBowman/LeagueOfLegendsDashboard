@@ -496,7 +496,7 @@ function updateScatterPlot(data) {
  */
 function updateHeatmap(data) {
   if (!data || data.singleMatchData.length === 0) return;
-
+  console.log("heatmap", data);
   const heatmapData = d3
     .rollups(
       data.singleMatchData,
@@ -796,7 +796,7 @@ function changeSelectedMatch() {
   updateBarChart(globalData);
   updateLineChart(globalData);
   updateScatterPlot(globalData);
-  updateHeatmap(globalData);
+  //updateHeatmap(globalData);
 }
 
 ////// Riot API Proxy Code //////
@@ -810,7 +810,6 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
   const summonerName = document.getElementById("summonerName").value;
   const tagLine = document.getElementById("tagLine").value;
   const matchCount = document.getElementById("matchCount").value;
-  console.log("matchCount", matchCount);
 
   try {
     const response = await fetch(
@@ -837,7 +836,6 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 });
 
 function displayData(data) {
-  console.log("display data", data);
   // Call each update function with the API data as needed
   updateBarChart(data);
   updateLineChart(data);
