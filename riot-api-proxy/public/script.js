@@ -23,7 +23,7 @@ function setup() {
 
   //event listeners
   d3.select("#matchSelect").on("change", changeSelectedMatch);
-  document.addEventListener('DOMContentLoaded', fillMatchDropdown);
+  document.addEventListener("DOMContentLoaded", fillMatchDropdown);
 
   //svg for bar chart
   svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left}, ${10})`);
@@ -110,7 +110,6 @@ function setup() {
  * @param data
  */
 function update(data) {
-
   const selectedMetric = d3.select("#metric").node().value;
   updateBarChart(data);
   updateLineChart(data);
@@ -226,27 +225,22 @@ function updateBarChart(data) {
         ?.info.participants.find((participant) => participant.championName === d.name);
 
       const lane = playerData ? playerData.lane : "Unknown lane";
-      const role = playerData ? playerData.role : "Unknown role";  
+      const role = playerData ? playerData.role : "Unknown role";
       tooltip
         .style("display", "block")
-        .html(
-          `${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`
-        )
+        .html(`${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`)
         .style("left", event.pageX + 5 + "px")
         .style("top", event.pageY - 28 + "px")
         .style("background", "dimgray")
         .style("border", "1px solid white");
 
-        d3.select(this).attr("fill", function () {
-          const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-          return color;
-        });
-
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
     })
     .on("mousemove", function (event) {
-      tooltip
-        .style("left", event.pageX + 5 + "px")
-        .style("top", event.pageY - 28 + "px");
+      tooltip.style("left", event.pageX + 5 + "px").style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
       tooltip.style("display", "none");
@@ -301,7 +295,7 @@ function updateLineChart(data) {
     // .attr("transform", "rotate(-45)")
     // .style("text-anchor", "end")
     //only show odd numbers
-    
+
     .selectAll("line, path")
     .attr("stroke", "white");
 
@@ -337,11 +331,10 @@ function updateLineChart(data) {
     .attr("cx", (d) => xAxis(d.gamesAgo))
     .attr("cy", (d) => yAxis(d.goldPerSecond))
     .attr("r", 7)
-    .attr("fill", function(data){
-      if(data.gameId === selectedMatch){
+    .attr("fill", function (data) {
+      if (data.gameId === selectedMatch) {
         return "gold";
-      }
-      else{
+      } else {
         return data.win ? "#85d0ff" : "#e54787";
       }
     })
@@ -357,10 +350,10 @@ function updateLineChart(data) {
         .style("background", "dimgray")
         .style("border", "1px solid white");
 
-        d3.select(this).attr("fill", function () {
-          const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-          return color;
-        });
+      d3.select(this).attr("fill", function () {
+        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
+        return color;
+      });
     })
     .on("mousemove", function (event) {
       tooltip
@@ -369,11 +362,10 @@ function updateLineChart(data) {
     })
     .on("mouseout", function () {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
-      d3.select(this).attr("fill", function(data){
-        if(data.gameId === selectedMatch){
+      d3.select(this).attr("fill", function (data) {
+        if (data.gameId === selectedMatch) {
           return "gold";
-        }
-        else{
+        } else {
           return data.win ? "#85d0ff" : "#e54787";
         }
       });
@@ -451,11 +443,10 @@ function updateScatterPlot(data) {
     .attr("cx", (d) => xAxis(d.deaths))
     .attr("cy", (d) => yAxis(d.kills))
     .attr("r", 7)
-    .attr("fill", function(data){
-      if(data.gameId === selectedMatch){
+    .attr("fill", function (data) {
+      if (data.gameId === selectedMatch) {
         return "gold";
-      }
-      else{
+      } else {
         return data.win ? "#85d0ff" : "#e54787";
       }
     })
@@ -486,11 +477,10 @@ function updateScatterPlot(data) {
       tooltip.style("display", "none"); // Hide the tooltip on mouse out
 
       // Change the color of the dot back
-      d3.select(this).attr("fill", function(data){
-        if(data.gameId === selectedMatch){
+      d3.select(this).attr("fill", function (data) {
+        if (data.gameId === selectedMatch) {
           return "gold";
-        }
-        else{
+        } else {
           return data.win ? "#85d0ff" : "#e54787";
         }
       });
@@ -797,7 +787,7 @@ function changeSelectedMatch() {
   let value = document.getElementById("matchSelect").value;
 
   //replace - with space
-  value = value.replace(/-/g, ' ');
+  value = value.replace(/-/g, " ");
   //lookup match id
   selectedMatch = matchIdMap.get(value);
 
@@ -819,9 +809,14 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 
   const summonerName = document.getElementById("summonerName").value;
   const tagLine = document.getElementById("tagLine").value;
+  const matchCount = document.getElementById("matchCount").value;
+  console.log("matchCount", matchCount);
 
   try {
-    const response = await fetch(`/riot-api/${encodeURIComponent(summonerName)}/${encodeURIComponent(tagLine)}`);
+    const response = await fetch(
+      `/riot-api/${encodeURIComponent(summonerName)}/${encodeURIComponent(tagLine)}?matchCount=${matchCount}`
+    );
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Network response was not ok: ${errorText}`);
@@ -854,13 +849,17 @@ function displayData(data) {
   //find self puuid
   const puuid = data.puuidData;
 
-
-  for(let i = 0; i < data.singleMatchData.length; i++) {
+  for (let i = 0; i < data.singleMatchData.length; i++) {
     //find self in the match
     const playerData = data.singleMatchData[i].info.participants.find((participant) => participant.puuid === puuid);
 
     //create string
-    let value = playerData.championName + " " + data.singleMatchData[i].info.gameMode + " "+ new Date (data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString()
+    let value =
+      playerData.championName +
+      " " +
+      data.singleMatchData[i].info.gameMode +
+      " " +
+      new Date(data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString();
     matchIdMap.set(value.toLowerCase(), data.singleMatchData[i].info.gameId);
     matches.push(value);
   }
@@ -871,20 +870,18 @@ function displayData(data) {
   fillMatchDropdown();
 }
 
-
 // method for match selector dropdown
 function fillMatchDropdown() {
   console.log("in populateDropdown");
-  const selector = document.getElementById('matchSelect');
+  const selector = document.getElementById("matchSelect");
 
-  selector.innerHTML = '';
+  selector.innerHTML = "";
 
   console.log("matches in populate", matches);
-  matches.forEach(option => {
-    const match = document.createElement('option');
-    match.value = option.toLowerCase().replace(/\s+/g, '-'); // Format the value
+  matches.forEach((option) => {
+    const match = document.createElement("option");
+    match.value = option.toLowerCase().replace(/\s+/g, "-"); // Format the value
     match.textContent = option; // Set the visible text
     selector.appendChild(match);
   });
 }
-

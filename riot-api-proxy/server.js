@@ -20,6 +20,7 @@ app.get("/", (req, res) => {
 app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
   console.log("req.params", req.params);
   const { gameName, tagLine } = req.params;
+  const { matchCount } = req.query;
 
   try {
     const response = await axios.get(
@@ -31,7 +32,9 @@ app.get("/riot-api/:gameName/:tagLine", async (req, res) => {
 
     // Fetch match data using the puuid
     const matchResponse = await axios.get(
-      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=20&api_key=${RIOT_API_KEY}`
+      `https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?start=0&count=${encodeURIComponent(
+        matchCount
+      )}&api_key=${RIOT_API_KEY}`
     );
     console.log("matchResponse", matchResponse.data[0]);
     let matchData = [];
