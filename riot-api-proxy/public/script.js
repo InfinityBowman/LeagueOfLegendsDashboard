@@ -4,9 +4,12 @@ const CHART_HEIGHT = 200;
 const MARGIN = { left: 250, bottom: 0, top: 100, right: 0 };
 const ANIMATION_DUATION = 300;
 
+const radius = 100;
+
 let svgBar, svgLine, svgArea, svgScatter, svgHeatmap, svgDualBar;
 let isDataLoaded = false,
   loadingData = false;
+
 const tooltip = d3
   .select("body")
   .append("div")
@@ -90,7 +93,7 @@ function setup() {
     .attr("transform", `rotate(-90)`)
     .attr("x", -CHART_HEIGHT / 2)
     .attr("y", -30)
-    .text("Gold per Second")
+    .text("Gold per Minute")
     .style("fill", "white");
 
   //svg for scatter plot
@@ -121,7 +124,6 @@ function setup() {
     .text("Kills")
     .style("fill", "white");
 
-  // svg for calendar heatmap
   svgHeatmap = d3
     .select("#CalendarHeatmap-div")
     .append("svg")
@@ -136,6 +138,14 @@ function setup() {
     .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 2000)
     .append("g") // Add a group to handle transformations
     .attr("transform", `translate(${50}, ${MARGIN.top - 50})`);
+
+  svgRadar = d3
+    .select("#RadarChart-div")
+    .append("svg")
+    .attr("width", CHART_WIDTH)
+    .attr("height", CHART_HEIGHT)
+    .append("g")
+    .attr("transform", `translate(${CHART_WIDTH / 2}, ${CHART_HEIGHT / 2})`);
 }
 
 /**
@@ -263,7 +273,7 @@ function updateBarChart(data) {
       tooltip.transition().duration(50).style("opacity", 1);
       tooltip
         .html(() => {
-          return `${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Record: ${d.wins} - ${d.losses}`;
+          return `<div>${d.name}</div><div>Lane: ${lane}</div><div>Role: ${role}</div><div>Record: ${d.wins} - ${d.losses}</div>`;
         })
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 28 + "px")
@@ -365,6 +375,11 @@ function updateLineChart(data) {
   const points = svgLine.selectAll("circle").data(lineData);
   const radius = 7;
 
+  const format = (value) => {
+    const formattedValue = d3.format(".2f")(value);
+    return formattedValue.replace(/\.0$/, "");
+  };
+
   points
     .enter()
     .append("circle")
@@ -386,7 +401,7 @@ function updateLineChart(data) {
       tooltip.transition().duration(50).style("opacity", 1);
       tooltip
         .html(() => {
-          return `Gold/sec: ${d.goldPerSecond.toFixed(2)}`;
+          return `<div>Gold/min: ${format(d.goldPerSecond * 60)}</div>`;
         })
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 28 + "px")
@@ -533,7 +548,7 @@ function updateScatterPlot(data) {
       tooltip.transition().duration(50).style("opacity", 1);
       tooltip
         .html(() => {
-          return `Kills: ${d.kills}<br>Deaths: ${d.deaths}<br>Win: ${d.win}`;
+          return `<div>Kills: ${d.kills}</div><div>Deaths: ${d.deaths}</div><div>Win: ${d.win}</div>`;
         })
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 28 + "px")
@@ -748,7 +763,12 @@ function updateHeatmap(data) {
         tooltip
           .html(() => {
             const winRate = d.wins / (d.wins + d.losses);
-            return `Date: ${formatDate(d.date)}<br>Win Rate: ${format(winRate)}<br>Record: ${d.wins} - ${d.losses}`;
+            const winRateColor = colorFn(winRate); // Get the color from colorFn
+            return `
+            <div>${formatDate(d.date)}</div>
+            <div>Win Rate: <span style="color: ${winRateColor}">${format(winRate)}</span></div>
+            <div>Record: ${d.wins} - ${d.losses}</div>
+          `;
           })
           .style("left", event.pageX + 10 + "px")
           .style("top", event.pageY - 28 + "px")
@@ -829,11 +849,11 @@ function updateHeatmap(data) {
       .enter()
       .append("rect")
       .attr("fill", (d) => d.color)
-      .attr("x", (d, i) => i * (legendWidth + legendMargin)) // Adjust x position to include margin
+      .attr("x", (d, i) => i * (legendWidth + legendMargin))
       .attr("width", legendWidth)
       .attr("height", 15)
-      .attr("rx", 2) // Set x-axis radius for rounded corners
-      .attr("ry", 2) // Set y-axis radius for rounded corners;
+      .attr("rx", 2)
+      .attr("ry", 2)
       .on("click", toggle);
 
     legend
@@ -1074,6 +1094,11 @@ function updateDualBarChart(data) {
     .attr("stroke", "white")
     .attr("stroke-dasharray", "4");
 
+  const format = (value) => {
+    const formattedValue = d3.format(".2f")(value);
+    return formattedValue.replace(/\.0$/, "");
+  };
+
   chartGroup
     .selectAll("rect")
     .on("mouseover", function (event, d) {
@@ -1084,9 +1109,11 @@ function updateDualBarChart(data) {
       tooltip
         .html(() => {
           if (selectedMatch == null) {
-            return `Your Average: ${d.selfValue.toFixed(2)}<br>Opponent's Average: ${d.opponentValue.toFixed(2)}`;
+            return `<div>Your Average: ${format(d.selfValue)}</div><div>Opponent's Average: ${format(
+              d.opponentValue
+            )}</div>`;
           } else {
-            return `You: ${d.selfValue}<br>Opponent: ${d.opponentValue}`;
+            return `<div>You: ${d.selfValue}</div><div>Opponent: ${d.opponentValue}</div>`;
           }
         })
         .style("left", event.pageX + 10 + "px")
@@ -1105,6 +1132,118 @@ function updateDualBarChart(data) {
     });
 
   console.log("updateDualBarChart out");
+}
+
+function updateRadarChart(data) {
+  console.log(data);
+  console.log(radius);
+  const radarData = [
+    { axis: "Kills", value: 30 },
+    { axis: "Deaths", value: 20 },
+    { axis: "Assists", value: 60 },
+    { axis: "Gold/Min", value: 340 },
+    { axis: "CS/Min", value: 8.5 },
+  ];
+  const radarOpponentData = [
+    { axis: "Kills", value: 30 },
+    { axis: "Deaths", value: 20 },
+    { axis: "Assists", value: 60 },
+    { axis: "Gold/Min", value: 340 },
+    { axis: "CS/Min", value: 8.5 },
+  ];
+  console.log("radarData", radarData);
+
+  const angleSlice = (Math.PI * 2) / radarData[0].length;
+  const maxValue = Math.max(...radarData.flat().map((d) => d.value));
+  const rScale = d3.scaleLinear().range([0, radius]).domain([0, maxValue]);
+
+  const radarLine = d3
+    .lineRadial()
+    .curve(d3.curveLinearClosed)
+    .radius((d) => rScale(d.value))
+    .angle((d, i) => i * angleSlice);
+
+  const axisGrid = svgRadar.append("g").attr("class", "axisWrapper");
+
+  axisGrid
+    .selectAll(".levels")
+    .data(d3.range(1, 6).reverse())
+    .enter()
+    .append("circle")
+    .attr("class", "gridCircle")
+    .attr("r", (d) => (radius / 5) * d)
+    .style("fill", "#CDCDCD")
+    .style("stroke", "#CDCDCD")
+    .style("fill-opacity", 0.1);
+
+  axisGrid
+    .selectAll(".axisLabel")
+    .data(d3.range(1, 6).reverse())
+    .enter()
+    .append("text")
+    .attr("class", "axisLabel")
+    .attr("x", 4)
+    .attr("y", (d) => (-d * radius) / 5)
+    .attr("dy", "0.4em")
+    .style("font-size", "10px")
+    .attr("fill", "#737373")
+    .text((d) => ((maxValue / 5) * d).toFixed(2));
+
+  const axis = axisGrid.selectAll(".axis").data(radarData[0]).enter().append("g").attr("class", "axis");
+
+  axis
+    .append("line")
+    .attr("x1", 0)
+    .attr("y1", 0)
+    .attr("x2", (d, i) => rScale(maxValue) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y2", (d, i) => rScale(maxValue) * Math.sin(angleSlice * i - Math.PI / 2))
+    .attr("class", "line")
+    .style("stroke", "white")
+    .style("stroke-width", "2px");
+
+  axis
+    .append("text")
+    .attr("class", "legend")
+    .style("font-size", "11px")
+    .attr("text-anchor", "middle")
+    .attr("dy", "0.35em")
+    .attr("x", (d, i) => rScale(maxValue * 1.1) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("y", (d, i) => rScale(maxValue * 1.1) * Math.sin(angleSlice * i - Math.PI / 2))
+    .text((d) => d.axis);
+
+  const radarWrapper = svgRadar
+    .selectAll(".radarWrapper")
+    .data(radarData)
+    .enter()
+    .append("g")
+    .attr("class", "radarWrapper");
+
+  radarWrapper
+    .append("path")
+    .attr("class", "radarArea")
+    .attr("d", (d) => radarLine(d))
+    .style("fill", (d, i) => d3.schemeCategory10[i])
+    .style("fill-opacity", 0.1);
+
+  radarWrapper
+    .append("path")
+    .attr("class", "radarStroke")
+    .attr("d", (d) => radarLine(d))
+    .style("stroke-width", "2px")
+    .style("stroke", (d, i) => d3.schemeCategory10[i])
+    .style("fill", "none");
+
+  radarWrapper
+    .selectAll(".radarCircle")
+    .data((d) => d)
+    .enter()
+    .append("circle")
+    .attr("class", "radarCircle")
+    .attr("r", 3)
+    .attr("cx", (d, i) => rScale(d.value) * Math.cos(angleSlice * i - Math.PI / 2))
+    .attr("cy", (d, i) => rScale(d.value) * Math.sin(angleSlice * i - Math.PI / 2))
+    .style("fill", (d, i, j) => d3.schemeCategory10[j])
+    .style("fill-opacity", 0.8);
 }
 
 /**
@@ -1192,6 +1331,7 @@ function displayData(data) {
   updateScatterPlot(data);
   updateHeatmap(data);
   updateDualBarChart(data);
+  updateRadarChart(data);
 
   matches.push("Select a match");
 

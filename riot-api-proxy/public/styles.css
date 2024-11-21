@@ -179,6 +179,11 @@ text {
   margin-left: 10px;
 }
 
+.tooltip div {
+  padding: 1px;
+  margin: none;
+}
+
 .matchSelect {
   display: flex;
   flex-direction: column;
