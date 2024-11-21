@@ -1,5 +1,5 @@
 // Constants for the charts, that would be useful.
-const CHART_WIDTH = 450;
+const CHART_WIDTH = 400;
 const CHART_HEIGHT = 200;
 const MARGIN = { left: 250, bottom: 0, top: 100, right: 0 };
 const ANIMATION_DUATION = 300;
@@ -67,6 +67,10 @@ function setup() {
     .attr("y", -30)
     .text("Frequency")
     .style("fill", "white");
+
+  //add legend for bar chart
+
+
 
   //svg for line chart
   svgLine = d3
@@ -153,7 +157,6 @@ function setup() {
  * @param data
  */
 function update(data) {
-  const selectedMetric = d3.select("#metric").node().value;
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
@@ -337,7 +340,7 @@ function updateLineChart(data) {
     .append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
-    .call(d3.axisBottom(xAxis).ticks(numberOfTicks))
+    .call(d3.axisBottom(xAxis).tickFormat((d, i) => (i % 2 === 0 ? d : "")))
     .selectAll("line, path")
     .attr("stroke", "white");
 
@@ -464,6 +467,10 @@ function updateLineChart(data) {
           return data.win ? "#85d0ff" : "#e54787";
         }
       });
+    })
+    .on("click", function (event, d) {
+      selectedMatch = d.gameId;
+      update(data);
     });
 
   points.exit().remove();
@@ -611,6 +618,10 @@ function updateScatterPlot(data) {
           return data.win ? "#85d0ff" : "#e54787";
         }
       });
+    })
+    .on("click", function (event, d) {
+      selectedMatch = d.gameId;
+      update(data);
     });
 
   points.attr("cx", (d) => xAxis(d.deaths)).attr("cy", (d) => yAxis(d.kills));

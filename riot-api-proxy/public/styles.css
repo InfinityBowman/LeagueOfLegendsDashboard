@@ -66,7 +66,7 @@ h2 {
 
 svg {
   padding: 10px;
-  width: 550px;
+  width: 500px;
   height: 300px;
 }
 
@@ -194,4 +194,12 @@ text {
 .row {
   display: flex;
   flex-direction: row;
+}
+
+.chart-style {
+  border-width: 2px; 
+  border-color: #ffffff; 
+  border-style: solid; 
+  width: 560px; 
+  margin: 10px;
 }
