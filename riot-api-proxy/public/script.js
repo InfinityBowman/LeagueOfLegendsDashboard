@@ -135,7 +135,7 @@ function setup() {
     .select("#DualBarChart-div")
     .append("svg")
     .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right - 30)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 2000)
+    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 20)
     .append("g") // Add a group to handle transformations
     .attr("transform", `translate(${50}, ${MARGIN.top - 50})`);
 
@@ -321,32 +321,34 @@ function updateLineChart(data) {
     .filter(Boolean); // Remove any null entries in case the player wasn't found
 
   // Define x-axis as 'games ago'
-  const xAxis = d3
-    .scalePoint()
-    .domain(lineData.map((d) => d.gamesAgo))
-    .range([0, CHART_WIDTH])
-    .padding(0);
-
+  const xAxis = d3.scaleLinear().domain([lineData.length, 1]).range([0, CHART_WIDTH]);
   // Define y-axis as 'gold per second'
   const yAxis = d3
     .scaleLinear()
     .domain([0, d3.max(lineData, (d) => d.goldPerSecond)])
     .range([CHART_HEIGHT, 0]);
 
+  // Calculate a reasonable number of ticks based on the number of data points
+  const numberOfTicks = Math.min(lineData.length, 10);
+
   // Append x-axis
   svgLine.select(".x-axis").remove();
-  svgLine
+  const xAxisGroup = svgLine
     .append("g")
     .attr("class", "x-axis")
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
-    .call(d3.axisBottom(xAxis))
-    // .selectAll("text")
-    // .attr("transform", "rotate(-45)")
-    // .style("text-anchor", "end")
-    //only show odd numbers
-
+    .call(d3.axisBottom(xAxis).ticks(numberOfTicks))
     .selectAll("line, path")
     .attr("stroke", "white");
+
+  // Customize the tick values
+  const tickValues = lineData
+    .map((d, i) => (i % Math.ceil(lineData.length / numberOfTicks) === 0 ? d.gamesAgo : null))
+    .filter((d) => d !== null);
+  xAxisGroup.call(d3.axisBottom(xAxis).tickValues(tickValues));
+
+  console.log(numberOfTicks);
+  // console.log(tickValues);
 
   // Append y-axis
   svgLine.select(".y-axis").remove();
@@ -1135,8 +1137,8 @@ function updateDualBarChart(data) {
 }
 
 function updateRadarChart(data) {
-  console.log(data);
-  console.log(radius);
+  // console.log(data);
+  // console.log(radius);
   const radarData = [
     { axis: "Kills", value: 30 },
     { axis: "Deaths", value: 20 },
@@ -1151,7 +1153,6 @@ function updateRadarChart(data) {
     { axis: "Gold/Min", value: 340 },
     { axis: "CS/Min", value: 8.5 },
   ];
-  console.log("radarData", radarData);
 
   const angleSlice = (Math.PI * 2) / radarData[0].length;
   const maxValue = Math.max(...radarData.flat().map((d) => d.value));
