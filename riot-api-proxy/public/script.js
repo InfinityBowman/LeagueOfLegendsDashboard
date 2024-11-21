@@ -7,7 +7,19 @@ const ANIMATION_DUATION = 300;
 let svgBar, svgLine, svgArea, svgScatter, svgHeatmap, svgDualBar;
 let isDataLoaded = false,
   loadingData = false;
-const tooltip = d3.select("#tooltip");
+const tooltip = d3
+  .select("body")
+  .append("div")
+  .attr("class", "tooltip")
+  .style("font-size", 10)
+  .style("position", "absolute")
+  .style("background-color", "#000000")
+  .style("color", "white")
+  .style("padding", "10px")
+  .style("border", "1px solid #aac8e4")
+  .style("border-radius", "5px")
+  .style("pointer-events", "none")
+  .style("opacity", 0);
 
 const matches = [];
 let selectedMatch = null;
@@ -26,7 +38,11 @@ function setup() {
   document.addEventListener("DOMContentLoaded", fillMatchDropdown);
 
   //svg for bar chart
-  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
+  svgBar = d3
+    .select("#Barchart-div")
+    .append("svg")
+    .append("g")
+    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -50,7 +66,11 @@ function setup() {
     .style("fill", "white");
 
   //svg for line chart
-  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
+  svgLine = d3
+    .select("#Linechart-div")
+    .append("svg")
+    .append("g")
+    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -102,18 +122,20 @@ function setup() {
     .style("fill", "white");
 
   // svg for calendar heatmap
-  svgHeatmap = d3.select("#CalendarHeatmap-div")
+  svgHeatmap = d3
+    .select("#CalendarHeatmap-div")
     .append("svg")
     .attr("width", 120)
     .append("g")
-    .attr("transform", `translate(100, -20)`);
+    .attr("transform", `translate(100, -15)`);
 
-  svgDualBar = d3.select("#DualBarChart-div")
-  .append("svg")
-  .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right -30)
-  .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 2000)
-  .append("g") // Add a group to handle transformations
-  .attr("transform", `translate(${50}, ${MARGIN.top-50})`);
+  svgDualBar = d3
+    .select("#DualBarChart-div")
+    .append("svg")
+    .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right - 30)
+    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 2000)
+    .append("g") // Add a group to handle transformations
+    .attr("transform", `translate(${50}, ${MARGIN.top - 50})`);
 }
 
 /**
@@ -136,8 +158,6 @@ function updateBarChart(data) {
   //Chat GPT aided
 
   if (!data || data.singleMatchData.length === 0) return;
-
-  const tooltip = d3.select("#tooltip");
 
   const puuidData = data.puuidData;
   const championCounts = {};
@@ -238,13 +258,16 @@ function updateBarChart(data) {
 
       const lane = playerData ? playerData.lane : "Unknown lane";
       const role = playerData ? playerData.role : "Unknown role";
+      // Hover effect
+      d3.select(this).classed("scaled", true);
+      tooltip.transition().duration(50).style("opacity", 1);
       tooltip
-        .style("display", "block")
-        .html(`${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Wins: ${d.wins}<br>Losses: ${d.losses}`)
-        .style("left", event.pageX + 5 + "px")
+        .html(() => {
+          return `${d.name}<br>Lane: ${lane}<br>Role: ${role}<br>Record: ${d.wins} - ${d.losses}`;
+        })
+        .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 28 + "px")
-        .style("background", "dimgray")
-        .style("border", "1px solid white");
+        .style("background-color", "rgba(0, 0, 0, 0.8)");
 
       // d3.select(this).attr("fill", function () {
       //   const color = d3.color(d3.select(this).attr("fill")).brighter(1);
@@ -252,10 +275,14 @@ function updateBarChart(data) {
       // });
     })
     .on("mousemove", function (event) {
-      tooltip.style("left", event.pageX + 5 + "px").style("top", event.pageY - 28 + "px");
+      tooltip
+        .style("left", event.pageX + 10 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip.style("display", "none");
+      // End hover effect
+      d3.select(this).classed("scaled", false);
+      tooltip.transition().duration(200).style("opacity", 0);
     });
 }
 
@@ -336,13 +363,14 @@ function updateLineChart(data) {
   // Create circles for each point on the line
   svgLine.selectAll("circle").remove();
   const points = svgLine.selectAll("circle").data(lineData);
+  const radius = 7;
 
   points
     .enter()
     .append("circle")
     .attr("cx", (d) => xAxis(d.gamesAgo))
     .attr("cy", (d) => yAxis(d.goldPerSecond))
-    .attr("r", 7)
+    .attr("r", radius)
     .attr("fill", function (data) {
       if (data.gameId === selectedMatch) {
         return "gold";
@@ -354,26 +382,64 @@ function updateLineChart(data) {
     //Chat GPT aided
     .on("mouseover", function (event, d) {
       // Show the tooltip with y-value (gold per second)
+      d3.select(this).classed("scaled", true);
+      tooltip.transition().duration(50).style("opacity", 1);
       tooltip
-        .style("display", "block")
-        .html(`Gold/sec: ${d.goldPerSecond.toFixed(2)}`) // Display the gold per second
-        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
-        .style("top", event.pageY - 28 + "px") // Position above the cursor
-        .style("background", "dimgray")
-        .style("border", "1px solid white");
+        .html(() => {
+          return `Gold/sec: ${d.goldPerSecond.toFixed(2)}`;
+        })
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px")
+        .style("background-color", "rgba(0, 0, 0, 0.8)");
 
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+      const color = d3.color(d3.select(this).attr("fill"));
+
+      // Add a floating border circle
+      d3.select(this.parentNode)
+        .append("circle")
+        .attr("class", "floating-border")
+        .attr("cx", d3.select(this).attr("cx"))
+        .attr("cy", d3.select(this).attr("cy"))
+        .attr("r", radius)
+        .attr("stroke", color)
+        .attr("stroke-width", 1)
+        .attr("fill", "none")
+        .style("opacity", 0)
+        .transition()
+        .duration(100)
+        .attr("r", radius + 2)
+        .style("opacity", 1);
+
+      d3.select(this)
+        .transition()
+        .duration(100)
+        .attr("r", radius - 0.5);
     })
     .on("mousemove", function (event) {
       tooltip
-        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("left", event.pageX + 10 + "px") // Update position on move
         .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip.style("display", "none"); // Hide the tooltip on mouse out
+      // End hover effect
+      d3.select(this).classed("scaled", false);
+      tooltip.transition().duration(200).style("opacity", 0);
+
+      // Remove the floating border circle with transition
+      d3.select(this.parentNode)
+        .selectAll(".floating-border")
+        .transition()
+        .duration(300)
+        .attr("r", radius)
+        .style("opacity", 0)
+        .remove();
+
+      // Reset the size of the inner circle with transition
+      d3.select(this)
+        .transition()
+        .duration(300)
+        .attr("r", radius + 0.5);
+
       d3.select(this).attr("fill", function (data) {
         if (data.gameId === selectedMatch) {
           return "gold";
@@ -442,19 +508,17 @@ function updateScatterPlot(data) {
     .selectAll("line, path")
     .attr("stroke", "white");
 
-  // Create the tooltip
-  const tooltip = d3.select("#tooltip"); // Ensure this is defined
-
   // Draw points
   svgScatter.selectAll("circle").remove();
   const points = svgScatter.selectAll("circle").data(scatterData);
+  const radius = 7;
 
   points
     .enter()
     .append("circle")
     .attr("cx", (d) => xAxis(d.deaths))
     .attr("cy", (d) => yAxis(d.kills))
-    .attr("r", 7)
+    .attr("r", radius)
     .attr("fill", function (data) {
       if (data.gameId === selectedMatch) {
         return "gold";
@@ -463,30 +527,64 @@ function updateScatterPlot(data) {
       }
     })
 
-    //Chat GPT aided
     .on("mouseover", function (event, d) {
-      // Show the tooltip with kills and deaths
+      // Hover effect
+      d3.select(this).classed("scaled", true);
+      tooltip.transition().duration(50).style("opacity", 1);
       tooltip
-        .style("display", "block")
-        .html(`Kills: ${d.kills}<br>Deaths: ${d.deaths}<br>Win: ${d.win}`) // Set the content
-        .style("left", event.pageX + 5 + "px") // Position tooltip next to the cursor
-        .style("top", event.pageY - 28 + "px") // Position above the cursor
-        .style("background", "dimgray")
-        .style("border", "1px solid white");
+        .html(() => {
+          return `Kills: ${d.kills}<br>Deaths: ${d.deaths}<br>Win: ${d.win}`;
+        })
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px")
+        .style("background-color", "rgba(0, 0, 0, 0.8)");
+      const color = d3.color(d3.select(this).attr("fill"));
 
-      // Change the color of the dot to lighter
-      d3.select(this).attr("fill", function () {
-        const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-        return color;
-      });
+      // Add a floating border circle
+      d3.select(this.parentNode)
+        .append("circle")
+        .attr("class", "floating-border")
+        .attr("cx", d3.select(this).attr("cx"))
+        .attr("cy", d3.select(this).attr("cy"))
+        .attr("r", radius)
+        .attr("stroke", color)
+        .attr("stroke-width", 1)
+        .attr("fill", "none")
+        .style("opacity", 0)
+        .transition()
+        .duration(100)
+        .attr("r", radius + 2)
+        .style("opacity", 1);
+
+      d3.select(this)
+        .transition()
+        .duration(100)
+        .attr("r", radius - 0.5);
     })
     .on("mousemove", function (event) {
       tooltip
-        .style("left", event.pageX + 5 + "px") // Update position on move
+        .style("left", event.pageX + 10 + "px") // Update position on move
         .style("top", event.pageY - 28 + "px");
     })
     .on("mouseout", function () {
-      tooltip.style("display", "none"); // Hide the tooltip on mouse out
+      // End hover effect
+      d3.select(this).classed("scaled", false);
+      tooltip.transition().duration(200).style("opacity", 0);
+
+      // Remove the floating border circle with transition
+      d3.select(this.parentNode)
+        .selectAll(".floating-border")
+        .transition()
+        .duration(300)
+        .attr("r", radius)
+        .style("opacity", 0)
+        .remove();
+
+      // Reset the size of the inner circle with transition
+      d3.select(this)
+        .transition()
+        .duration(300)
+        .attr("r", radius + 0.5);
 
       // Change the color of the dot back
       d3.select(this).attr("fill", function (data) {
@@ -581,21 +679,6 @@ function updateHeatmap(data) {
       .style("fill", "white")
       .text(formatDay);
 
-    // Create a tooltip div
-    const tooltip = d3
-      .select("body")
-      .append("div")
-      .attr("class", "tooltip")
-      .style("font-size", 10)
-      .style("position", "absolute")
-      .style("background", "2f2f2f")
-      .style("color", "white")
-      .style("padding", "10px")
-      .style("border", "1px solid #aac8e4")
-      .style("border-radius", "5px")
-      .style("pointer-events", "none")
-      .style("opacity", 0);
-
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
@@ -661,19 +744,25 @@ function updateHeatmap(data) {
         // Hover effect
         if (d.wins + d.losses === 0) return;
         d3.select(this).classed("scaled", true);
-        tooltip.transition().duration(50).style("opacity", 0.9);
+        tooltip.transition().duration(50).style("opacity", 1);
         tooltip
           .html(() => {
             const winRate = d.wins / (d.wins + d.losses);
             return `Date: ${formatDate(d.date)}<br>Win Rate: ${format(winRate)}<br>Record: ${d.wins} - ${d.losses}`;
           })
           .style("left", event.pageX + 10 + "px")
+          .style("top", event.pageY - 28 + "px")
+          .style("background-color", "rgba(0, 0, 0, 0.8)");
+      })
+      .on("mousemove", function (event) {
+        tooltip
+          .style("left", event.pageX + 10 + "px") // Update position on move
           .style("top", event.pageY - 28 + "px");
       })
       .on("mouseout", function () {
         // End hover effect
         d3.select(this).classed("scaled", false);
-        tooltip.transition().duration(300).style("opacity", 0);
+        tooltip.transition().duration(200).style("opacity", 0);
       });
 
     const legend = group.append("g").attr("transform", `translate(10, ${years.length * yearHeight + cellSize * 4})`);
@@ -771,26 +860,25 @@ function updateHeatmap(data) {
 }
 
 function updateDualBarChart(data) {
-  console.log("updateDualBarChart in");
-  
   let dataSelf, dataOpponent;
 
   //averages data
-  if(selectedMatch == null) {
+  if (selectedMatch == null) {
     // Calculate averages
     const puuid = data.puuidData;
 
     playerTotals = new Map();
     opponentTotals = new Map();
-    
-    for(let i = 0; i < data.singleMatchData.length; i++)
-    {
+
+    for (let i = 0; i < data.singleMatchData.length; i++) {
       //get player data
       const match = data.singleMatchData[i];
       const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
 
       //find opponent w/ matching lane
-      const opponentData = match.info.participants.find((participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid);
+      const opponentData = match.info.participants.find(
+        (participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid
+      );
 
       //add player data
       for (let [key, value] of Object.entries(playerData)) {
@@ -821,25 +909,25 @@ function updateDualBarChart(data) {
     }
 
     dataSelf = [
-      {label: "Kills", value: playerTotals.get("kills")},
-      {label: "Assists", value: playerTotals.get("assists")},
-      {label: "Deaths", value: playerTotals.get("deaths")},
-      {label: "Damage Taken", value: playerTotals.get("totalDamageTaken")},
-      {label: "Total Damage", value: playerTotals.get("totalDamageDealt")},
-      {label: "Gold Earned", value: playerTotals.get("goldEarned")},
-      {label: "Minion Kills", value: playerTotals.get("totalMinionsKilled")},
-      {label: "Time Dead", value: playerTotals.get("totalTimeSpentDead")},
+      { label: "Kills", value: playerTotals.get("kills") },
+      { label: "Assists", value: playerTotals.get("assists") },
+      { label: "Deaths", value: playerTotals.get("deaths") },
+      { label: "Damage Taken", value: playerTotals.get("totalDamageTaken") },
+      { label: "Total Damage", value: playerTotals.get("totalDamageDealt") },
+      { label: "Gold Earned", value: playerTotals.get("goldEarned") },
+      { label: "Minion Kills", value: playerTotals.get("totalMinionsKilled") },
+      { label: "Time Dead", value: playerTotals.get("totalTimeSpentDead") },
     ];
 
     dataOpponent = [
-      {label: "Kills", value: opponentTotals.get("kills")},
-      {label: "Assists", value: opponentTotals.get("assists")},
-      {label: "Deaths", value: opponentTotals.get("deaths")},
-      {label: "Damage Taken", value: opponentTotals.get("totalDamageTaken")},
-      {label: "Total Damage", value: opponentTotals.get("totalDamageDealt")},
-      {label: "Gold Earned", value: opponentTotals.get("goldEarned")},
-      {label: "Minion Kills", value: opponentTotals.get("totalMinionsKilled")},
-      {label: "Time Dead", value: opponentTotals.get("totalTimeSpentDead")},
+      { label: "Kills", value: opponentTotals.get("kills") },
+      { label: "Assists", value: opponentTotals.get("assists") },
+      { label: "Deaths", value: opponentTotals.get("deaths") },
+      { label: "Damage Taken", value: opponentTotals.get("totalDamageTaken") },
+      { label: "Total Damage", value: opponentTotals.get("totalDamageDealt") },
+      { label: "Gold Earned", value: opponentTotals.get("goldEarned") },
+      { label: "Minion Kills", value: opponentTotals.get("totalMinionsKilled") },
+      { label: "Time Dead", value: opponentTotals.get("totalTimeSpentDead") },
     ];
   }
   //specific match data
@@ -848,27 +936,29 @@ function updateDualBarChart(data) {
     const puuid = data.puuidData;
     const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
     dataSelf = [
-      {label: "Kills", value: playerData.kills},
-      {label: "Assists", value: playerData.assists},
-      {label: "Deaths", value: playerData.deaths},
-      {label: "Damage Taken", value: playerData.totalDamageTaken},
-      {label: "Total Damage", value: playerData.totalDamageDealt},
-      {label: "Gold Earned", value: playerData.goldEarned},
-      {label: "Minion Kills", value: playerData.totalMinionsKilled},
-      {label: "Time Dead", value: playerData.totalTimeSpentDead},
+      { label: "Kills", value: playerData.kills },
+      { label: "Assists", value: playerData.assists },
+      { label: "Deaths", value: playerData.deaths },
+      { label: "Damage Taken", value: playerData.totalDamageTaken },
+      { label: "Total Damage", value: playerData.totalDamageDealt },
+      { label: "Gold Earned", value: playerData.goldEarned },
+      { label: "Minion Kills", value: playerData.totalMinionsKilled },
+      { label: "Time Dead", value: playerData.totalTimeSpentDead },
     ];
 
     //find opponent
-    const opponentData = match.info.participants.find((participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid);
+    const opponentData = match.info.participants.find(
+      (participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid
+    );
     dataOpponent = [
-      {label: "Kills", value: opponentData.kills},
-      {label: "Assists", value: opponentData.assists},
-      {label: "Deaths", value: opponentData.deaths},
-      {label: "Damage Taken", value: opponentData.totalDamageTaken},
-      {label: "Total Damage", value: opponentData.totalDamageDealt},
-      {label: "Gold Earned", value: opponentData.goldEarned},
-      {label: "Minion Kills", value: opponentData.totalMinionsKilled},
-      {label: "Time Dead", value: opponentData.totalTimeSpentDead},
+      { label: "Kills", value: opponentData.kills },
+      { label: "Assists", value: opponentData.assists },
+      { label: "Deaths", value: opponentData.deaths },
+      { label: "Damage Taken", value: opponentData.totalDamageTaken },
+      { label: "Total Damage", value: opponentData.totalDamageDealt },
+      { label: "Gold Earned", value: opponentData.goldEarned },
+      { label: "Minion Kills", value: opponentData.totalMinionsKilled },
+      { label: "Time Dead", value: opponentData.totalTimeSpentDead },
     ];
   }
 
@@ -883,7 +973,7 @@ function updateDualBarChart(data) {
     { label: "Vision", value: 40 },
     { label: "Objectives", value: 80 },
   ];
-  
+
   //chat gpt aided in generation, improvements by us
 
   // Ensure both datasets are compatible
@@ -912,18 +1002,18 @@ function updateDualBarChart(data) {
   const chartGroup = svgDualBar;
 
   // Define scales, axes, and chart elements
-  const xScale = d3.scaleBand()
-    .domain(map.map(d => d.label))
+  const xScale = d3
+    .scaleBand()
+    .domain(map.map((d) => d.label))
     .range([0, CHART_WIDTH])
     .padding(0.2);
 
-  const yScale = d3.scaleLinear()
-    .domain([0, 100])
-    .range([CHART_HEIGHT, 0]);
+  const yScale = d3.scaleLinear().domain([0, 100]).range([CHART_HEIGHT, 0]);
 
   // Add top x-axis
-  chartGroup.append("g")
-    .attr("transform", `translate(0, 0)`)
+  chartGroup
+    .append("g")
+    .attr("transform", `translate(0, -1)`) // -1 due to borders
     .call(d3.axisTop(xScale).tickSize(0))
     .selectAll("text")
     .attr("transform", "rotate(-30)")
@@ -931,7 +1021,8 @@ function updateDualBarChart(data) {
     .style("fill", "white");
 
   // Add bottom x-axis
-  chartGroup.append("g")
+  chartGroup
+    .append("g")
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xScale).tickSize(0))
     .selectAll("text")
@@ -939,8 +1030,43 @@ function updateDualBarChart(data) {
     .style("text-anchor", "end")
     .style("fill", "white");
 
+  // Render the blue bars (bottom)
+  chartGroup
+    .selectAll(".bar-bottom")
+    .data(map)
+    .enter()
+    .append("rect")
+    .attr("class", "bar-bottom")
+    .attr("x", (d) => xScale(d.label))
+    .attr("y", (d) => yScale(d.bottom))
+    .attr("width", xScale.bandwidth())
+    .attr("height", (d) => yScale(0) - yScale(d.bottom))
+    .attr("fill", "#85d0ff")
+    .attr("opacity", 0.8)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .attr("stroke-opacity", 0.9);
+
+  // Render the orange bars (top)
+  chartGroup
+    .selectAll(".bar-top")
+    .data(map)
+    .enter()
+    .append("rect")
+    .attr("class", "bar-top")
+    .attr("x", (d) => xScale(d.label))
+    .attr("y", 0) // Start from the top axis
+    .attr("width", xScale.bandwidth())
+    .attr("height", (d) => yScale(0) - yScale(d.top))
+    .attr("fill", "#e54787")
+    .attr("opacity", 0.8)
+    .attr("stroke", "white")
+    .attr("stroke-width", 2)
+    .attr("stroke-opacity", 0.9);
+
   // Add dashed line at 50%
-  chartGroup.append("line")
+  chartGroup
+    .append("line")
     .attr("x1", 0)
     .attr("x2", CHART_WIDTH)
     .attr("y1", yScale(50))
@@ -948,81 +1074,35 @@ function updateDualBarChart(data) {
     .attr("stroke", "white")
     .attr("stroke-dasharray", "4");
 
-  // Render the blue bars (bottom)
-  chartGroup.selectAll(".bar-bottom")
-    .data(map)
-    .enter()
-    .append("rect")
-    .attr("class", "bar-bottom")
-    .attr("x", d => xScale(d.label))
-    .attr("y", d => yScale(d.bottom))
-    .attr("width", xScale.bandwidth())
-    .attr("height", d => yScale(0) - yScale(d.bottom))
-    .attr("fill", "#85d0ff")
-    .attr("opacity", 0.6)
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
-    .attr("stroke-opacity", .9);
-
-  // Render the orange bars (top)
-  chartGroup.selectAll(".bar-top")
-    .data(map)
-    .enter()
-    .append("rect")
-    .attr("class", "bar-top")
-    .attr("x", d => xScale(d.label))
-    .attr("y", 0) // Start from the top axis
-    .attr("width", xScale.bandwidth())
-    .attr("height", d => yScale(0) - yScale(d.top))
-    .attr("fill", "#e54787")
-    .attr("opacity", 0.6)
-    .attr("stroke", "white")
-    .attr("stroke-width", 2)
-    .attr("stroke-opacity", .9);
-
-  const tooltip = d3
-    .select("body")
-    .append("div")
-    .attr("class", "tooltip")
-    .style("font-size", 10)
-    .style("position", "absolute")
-    .style("background", "2f2f2f")
-    .style("color", "white")
-    .style("padding", "10px")
-    .style("border", "1px solid #aac8e4")
-    .style("border-radius", "5px")
-    .style("pointer-events", "none")
-    .style("opacity", 0);
-
-  chartGroup.selectAll("rect")
-  .on("mouseover", function (event, d) {
-    // Hover effect
-    if (d.wins + d.losses === 0) return;
-    d3.select(this).classed("scaled", true);
-    tooltip.transition().duration(50).style("opacity", 0.9);
-    tooltip
-      .html(() => {
-        if(selectedMatch == null) {
-          return `Your Average: ${d.selfValue.toFixed(2)}<br>Opponent's Average: ${d.opponentValue.toFixed(2)}`;
-        }
-        else {
-          return `You: ${d.selfValue}<br>Opponent: ${d.opponentValue}`;
-        }
-      })
-      .style("left", event.pageX + 10 + "px")
-      .style("opacity", 0.9)
-      .style("top", event.pageY - 28 + "px");
-  })
-  .on("mousemove", function (event) {
-    tooltip
-      .style("left", event.pageX + 5 + "px") // Update position on move
-      .style("top", event.pageY - 28 + "px");
-  })
-  .on("mouseout", function () {
-    // End hover effect
-    d3.select(this).classed("scaled", false);
-    tooltip.transition().duration(300).style("opacity", 0);
-  });
+  chartGroup
+    .selectAll("rect")
+    .on("mouseover", function (event, d) {
+      // Hover effect
+      if (d.wins + d.losses === 0) return;
+      d3.select(this).classed("scaled", true);
+      tooltip.transition().duration(50).style("opacity", 1);
+      tooltip
+        .html(() => {
+          if (selectedMatch == null) {
+            return `Your Average: ${d.selfValue.toFixed(2)}<br>Opponent's Average: ${d.opponentValue.toFixed(2)}`;
+          } else {
+            return `You: ${d.selfValue}<br>Opponent: ${d.opponentValue}`;
+          }
+        })
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px")
+        .style("background-color", "rgba(0, 0, 0, 0.8)");
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 10 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
+    })
+    .on("mouseout", function () {
+      // End hover effect
+      d3.select(this).classed("scaled", false);
+      tooltip.transition().duration(200).style("opacity", 0);
+    });
 
   console.log("updateDualBarChart out");
 }
@@ -1066,7 +1146,6 @@ function changeSelectedMatch() {
   updateScatterPlot(globalData);
   // updateHeatmap(globalData);
   updateDualBarChart(globalData);
-
 }
 
 ////// Riot API Proxy Code //////
@@ -1132,16 +1211,14 @@ function displayData(data) {
       new Date(data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString() +
       " ";
 
-    if(playerData.win) {
+    if (playerData.win) {
       value += "Win";
-    }
-    else {
+    } else {
       value += "Loss";
     }
     matchIdMap.set(value.toLowerCase(), data.singleMatchData[i].info.gameId);
     matches.push(value);
   }
-
 
   //match selector
   fillMatchDropdown();
