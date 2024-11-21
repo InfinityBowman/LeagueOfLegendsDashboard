@@ -26,7 +26,7 @@ function setup() {
   document.addEventListener("DOMContentLoaded", fillMatchDropdown);
 
   //svg for bar chart
-  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
+  svgBar = d3.select("#Barchart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -50,7 +50,7 @@ function setup() {
     .style("fill", "white");
 
   //svg for line chart
-  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
+  svgLine = d3.select("#Linechart-div").append("svg").append("g").attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -78,7 +78,7 @@ function setup() {
     .select("#Scatterplot-div")
     .append("svg")
     .append("g")
-    .attr("transform", `translate(${MARGIN.left - 150}, ${10})`);
+    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
 
   // Add x-axis label for Scatter Plot
   svgScatter
@@ -102,14 +102,18 @@ function setup() {
     .style("fill", "white");
 
   // svg for calendar heatmap
-  svgHeatmap = d3.select("#CalendarHeatmap-div").append("svg").attr("transform", `translate(0, -20)`).append("g");
+  svgHeatmap = d3.select("#CalendarHeatmap-div")
+    .append("svg")
+    .attr("width", 120)
+    .append("g")
+    .attr("transform", `translate(100, -20)`);
 
   svgDualBar = d3.select("#DualBarChart-div")
   .append("svg")
-  .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right)
-  .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom)
+  .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right -30)
+  .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 2000)
   .append("g") // Add a group to handle transformations
-  .attr("transform", `translate(${0}, ${MARGIN.top-50})`);
+  .attr("transform", `translate(${50}, ${MARGIN.top-50})`);
 }
 
 /**
@@ -880,28 +884,6 @@ function updateDualBarChart(data) {
     { label: "Objectives", value: 80 },
   ];
   
-  // dataSelf = [
-  //   { label: "Kills", value: 50 },
-  //   { label: "Deaths", value: 30 },
-  //   { label: "Assists", value: 70 },
-  //   { label: "Damage", value: 90 },
-  //   { label: "Healing", value: 20 },
-  //   { label: "Gold", value: 60 },
-  //   { label: "Vision", value: 40 },
-  //   { label: "Objectives", value: 80 },
-  // ];
-  
-  // dataOpponent = [
-  //   { label: "Kills", value: 70 },
-  //   { label: "Deaths", value: 40 },
-  //   { label: "Assists", value: 60 },
-  //   { label: "Damage", value: 80 },
-  //   { label: "Healing", value: 30 },
-  //   { label: "Gold", value: 50 },
-  //   { label: "Vision", value: 60 },
-  //   { label: "Objectives", value: 70 },
-  // ];
-
   //chat gpt aided in generation, improvements by us
 
   // Ensure both datasets are compatible
@@ -918,6 +900,8 @@ function updateDualBarChart(data) {
       label: d1.label,
       top: (d2.value / total) * 100, // Orange bar (top)
       bottom: (d1.value / total) * 100, // Blue bar (bottom)
+      selfValue: d1.value,
+      opponentValue: d2.value,
     };
   });
 
@@ -942,6 +926,8 @@ function updateDualBarChart(data) {
     .attr("transform", `translate(0, 0)`)
     .call(d3.axisTop(xScale).tickSize(0))
     .selectAll("text")
+    .attr("transform", "rotate(-30)")
+    .style("text-anchor", "start")
     .style("fill", "white");
 
   // Add bottom x-axis
@@ -949,6 +935,8 @@ function updateDualBarChart(data) {
     .attr("transform", `translate(0, ${CHART_HEIGHT})`)
     .call(d3.axisBottom(xScale).tickSize(0))
     .selectAll("text")
+    .attr("transform", "rotate(-30)")
+    .style("text-anchor", "end")
     .style("fill", "white");
 
   // Add dashed line at 50%
@@ -991,6 +979,50 @@ function updateDualBarChart(data) {
     .attr("stroke", "white")
     .attr("stroke-width", 2)
     .attr("stroke-opacity", .9);
+
+  const tooltip = d3
+    .select("body")
+    .append("div")
+    .attr("class", "tooltip")
+    .style("font-size", 10)
+    .style("position", "absolute")
+    .style("background", "2f2f2f")
+    .style("color", "white")
+    .style("padding", "10px")
+    .style("border", "1px solid #aac8e4")
+    .style("border-radius", "5px")
+    .style("pointer-events", "none")
+    .style("opacity", 0);
+
+  chartGroup.selectAll("rect")
+  .on("mouseover", function (event, d) {
+    // Hover effect
+    if (d.wins + d.losses === 0) return;
+    d3.select(this).classed("scaled", true);
+    tooltip.transition().duration(50).style("opacity", 0.9);
+    tooltip
+      .html(() => {
+        if(selectedMatch == null) {
+          return `Your Average: ${d.selfValue.toFixed(2)}<br>Opponent's Average: ${d.opponentValue.toFixed(2)}`;
+        }
+        else {
+          return `You: ${d.selfValue}<br>Opponent: ${d.opponentValue}`;
+        }
+      })
+      .style("left", event.pageX + 10 + "px")
+      .style("opacity", 0.9)
+      .style("top", event.pageY - 28 + "px");
+  })
+  .on("mousemove", function (event) {
+    tooltip
+      .style("left", event.pageX + 5 + "px") // Update position on move
+      .style("top", event.pageY - 28 + "px");
+  })
+  .on("mouseout", function () {
+    // End hover effect
+    d3.select(this).classed("scaled", false);
+    tooltip.transition().duration(300).style("opacity", 0);
+  });
 
   console.log("updateDualBarChart out");
 }
@@ -1097,7 +1129,15 @@ function displayData(data) {
       " " +
       data.singleMatchData[i].info.gameMode +
       " " +
-      new Date(data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString();
+      new Date(data.singleMatchData[i].info.gameStartTimestamp).toLocaleDateString() +
+      " ";
+
+    if(playerData.win) {
+      value += "Win";
+    }
+    else {
+      value += "Loss";
+    }
     matchIdMap.set(value.toLowerCase(), data.singleMatchData[i].info.gameId);
     matches.push(value);
   }
