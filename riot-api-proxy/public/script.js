@@ -26,6 +26,7 @@ const tooltip = d3
 
 const matches = [];
 let selectedMatch = null;
+let selectedChampion = null;
 
 let globalData = null;
 let matchIdMap = new Map();
@@ -330,8 +331,8 @@ function updateBarChart(data) {
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.losses))
     .attr("fill", "#e54787")
-    .attr("stroke", "white")
-    .attr("stroke-width", 1);
+    .attr("stroke", function (d) {return d.name === selectedChampion ? "gold" : "white";})
+    .attr("stroke-width", 2);
 
   // Append wins bars on top of losses
   bars
@@ -342,8 +343,8 @@ function updateBarChart(data) {
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.wins))
     .attr("fill", "#85d0ff")
-    .attr("stroke", "white")
-    .attr("stroke-width", 1);
+    .attr("stroke", function (d) {return d.name === selectedChampion ? "gold" : "white";})
+    .attr("stroke-width", 2);
 
   // Add tooltip functionality to both sections
   bars
@@ -368,11 +369,6 @@ function updateBarChart(data) {
         .style("left", event.pageX + 10 + "px")
         .style("top", event.pageY - 28 + "px")
         .style("background-color", "rgba(0, 0, 0, 0.8)");
-
-      // d3.select(this).attr("fill", function () {
-      //   const color = d3.color(d3.select(this).attr("fill")).brighter(1);
-      //   return color;
-      // });
     })
     .on("mousemove", function (event) {
       tooltip
@@ -383,6 +379,15 @@ function updateBarChart(data) {
       // End hover effect
       d3.select(this).classed("scaled", false);
       tooltip.transition().duration(200).style("opacity", 0);
+    })
+    .on("click", function (event, d) {
+      if (selectedChampion === d.name) {
+        selectedChampion = null;
+      }
+      else {
+        selectedChampion = d.name;
+      }
+      update(data);
     });
 }
 
@@ -556,7 +561,12 @@ function updateLineChart(data) {
       });
     })
     .on("click", function (event, d) {
-      selectedMatch = d.gameId;
+      if (selectedMatch === d.gameId) {
+        selectedMatch = null;
+      }
+      else {
+        selectedMatch = d.gameId;
+      }
       update(data);
     });
 
@@ -707,7 +717,12 @@ function updateScatterPlot(data) {
       });
     })
     .on("click", function (event, d) {
-      selectedMatch = d.gameId;
+      if (selectedMatch === d.gameId) {
+        selectedMatch = null;
+      }
+      else {
+        selectedMatch = d.gameId;
+      }
       update(data);
     });
 
@@ -1230,8 +1245,6 @@ function updateDualBarChart(data) {
       d3.select(this).classed("scaled", false);
       tooltip.transition().duration(200).style("opacity", 0);
     });
-
-  console.log("updateDualBarChart out");
 }
 
 function updateRadarChart(data) {
