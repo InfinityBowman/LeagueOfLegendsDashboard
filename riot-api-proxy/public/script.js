@@ -248,7 +248,6 @@ function update(data) {
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
-  updateHeatmap(data);
   updateDualBarChart(data);
 }
 
@@ -400,7 +399,7 @@ function updateLineChart(data) {
   const puuidData = data.puuidData;
 
   // Collect gold/sec data for each game
-  const lineData = data.singleMatchData
+  let lineData = data.singleMatchData
     .map((match, index) => {
       const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
@@ -410,13 +409,26 @@ function updateLineChart(data) {
             goldPerSecond: playerData.goldEarned / playerData.timePlayed,
             win: playerData.win,
             gameId: data.singleMatchData[index].info.gameId,
+            championName: playerData.championName,
           }
         : null;
     })
     .filter(Boolean); // Remove any null entries in case the player wasn't found
 
+
+    console.log("line data before",lineData);
+    //filter out champion names
+    if (selectedChampion !== null) {
+      lineData = lineData.filter((d) => d.championName === selectedChampion);
+    }
+    console.log("line data after",lineData);
+    
+
   // Define x-axis as 'games ago'
-  const xAxis = d3.scaleLinear().domain([lineData.length, 1]).range([0, CHART_WIDTH]);
+  const xAxis = d3
+    .scaleLinear()
+    .domain([0, d3.max(lineData, (d) => d.gamesAgo)])
+    .range([0, CHART_WIDTH]);
   // Define y-axis as 'gold per second'
   const yAxis = d3
     .scaleLinear()
@@ -583,7 +595,7 @@ function updateScatterPlot(data) {
   const puuidData = data.puuidData;
 
   // Collect deaths and kills data for each game
-  const scatterData = data.singleMatchData
+  let scatterData = data.singleMatchData
     .map((match) => {
       const playerData = match.info.participants.find((participant) => participant.puuid === puuidData);
 
@@ -593,10 +605,15 @@ function updateScatterPlot(data) {
             kills: playerData.kills,
             win: playerData.win,
             gameId: match.info.gameId,
+            championName: playerData.championName,
           }
         : null;
     })
     .filter(Boolean); // Remove null entries if player wasn't found
+    //filter out champion names
+    if (selectedChampion !== null) {
+      scatterData = scatterData.filter((d) => d.championName === selectedChampion);
+    }
 
   // Define x-axis for deaths
   const xAxis = d3
