@@ -45,7 +45,7 @@ function setup() {
     .select("#Barchart-div")
     .append("svg")
     .append("g")
-    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
+    .attr("transform", `translate(${MARGIN.left - 200}, ${30})`);
 
   // Add x-axis label for Bar Chart
   svgBar
@@ -69,7 +69,34 @@ function setup() {
     .style("fill", "white");
 
   //add legend for bar chart
-
+  svgBar
+    .append("rect")
+    .attr("x", 130)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#85d0ff");
+  svgBar
+    .append("text")
+    .attr("x", 160)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Wins")
+    .style("fill", "white");
+  svgBar
+    .append("rect")
+    .attr("x", 200)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#e54787");
+  svgBar
+    .append("text")
+    .attr("x", 230)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Losses")
+    .style("fill", "white");
 
 
   //svg for line chart
@@ -77,7 +104,7 @@ function setup() {
     .select("#Linechart-div")
     .append("svg")
     .append("g")
-    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
+    .attr("transform", `translate(${MARGIN.left - 200}, ${30})`);
 
   // Add x-axis label for Line Chart
   svgLine
@@ -100,12 +127,42 @@ function setup() {
     .text("Gold per Minute")
     .style("fill", "white");
 
+  // legend for line chart
+  svgLine
+    .append("rect")
+    .attr("x", 130)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#85d0ff");
+  svgLine
+    .append("text")
+    .attr("x", 160)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Wins")
+    .style("fill", "white");
+  svgLine
+    .append("rect")
+    .attr("x", 200)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#e54787");
+  svgLine
+    .append("text")
+    .attr("x", 230)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Losses")
+    .style("fill", "white");
+
   //svg for scatter plot
   svgScatter = d3
     .select("#Scatterplot-div")
     .append("svg")
     .append("g")
-    .attr("transform", `translate(${MARGIN.left - 200}, ${10})`);
+    .attr("transform", `translate(${MARGIN.left - 200}, ${30})`);
 
   // Add x-axis label for Scatter Plot
   svgScatter
@@ -128,6 +185,36 @@ function setup() {
     .text("Kills")
     .style("fill", "white");
 
+    // legend for line chart
+    svgScatter
+    .append("rect")
+    .attr("x", 130)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#85d0ff");
+  svgScatter
+    .append("text")
+    .attr("x", 160)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Wins")
+    .style("fill", "white");
+  svgScatter
+    .append("rect")
+    .attr("x", 200)
+    .attr("y", -30)
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("fill", "#e54787");
+  svgScatter
+    .append("text")
+    .attr("x", 230)
+    .attr("y", -15)
+    .attr("font-size", 12)
+    .text("Losses")
+    .style("fill", "white");
+
   svgHeatmap = d3
     .select("#CalendarHeatmap-div")
     .append("svg")
@@ -139,7 +226,7 @@ function setup() {
     .select("#DualBarChart-div")
     .append("svg")
     .attr("width", CHART_WIDTH + MARGIN.left + MARGIN.right - 30)
-    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 20)
+    .attr("height", CHART_HEIGHT + MARGIN.top + MARGIN.bottom - 200)
     .append("g") // Add a group to handle transformations
     .attr("transform", `translate(${50}, ${MARGIN.top - 50})`);
 
