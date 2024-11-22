@@ -191,7 +191,6 @@ function update(data) {
   updateDualBarChart(data);
   updateRadarChart(data);
   updateTreeChart(data);
-
 }
 
 /**
@@ -371,10 +370,11 @@ function updateLineChart(data) {
     .scaleLinear()
     .domain([0, d3.max(lineData, (d) => d.gamesAgo)])
     .range([0, CHART_WIDTH]);
-  // Define y-axis as 'gold per second'
+
+  // Define y-axis as 'gold per minute'
   const yAxis = d3
     .scaleLinear()
-    .domain([0, d3.max(lineData, (d) => d.goldPerSecond)])
+    .domain([0, d3.max(lineData, (d) => d.goldPerSecond * 60)])
     .range([CHART_HEIGHT, 0]);
 
   // Calculate a reasonable number of ticks based on the number of data points
@@ -407,7 +407,7 @@ function updateLineChart(data) {
   const lineGenerator = d3
     .line()
     .x((d) => xAxis(d.gamesAgo))
-    .y((d) => yAxis(d.goldPerSecond));
+    .y((d) => yAxis(d.goldPerSecond * 60));
 
   svgLine
     .append("path")
@@ -427,7 +427,7 @@ function updateLineChart(data) {
     .enter()
     .append("circle")
     .attr("cx", (d) => xAxis(d.gamesAgo))
-    .attr("cy", (d) => yAxis(d.goldPerSecond))
+    .attr("cy", (d) => yAxis(d.goldPerSecond * 60))
     .attr("r", radius)
     .attr("fill", function (data) {
       if (data.gameId === selectedMatch) {
@@ -955,7 +955,6 @@ function updateDualBarChart(data) {
 
     playerTotals = new Map();
     opponentTotals = new Map();
-
 
     for (let i = 0; i < data.singleMatchData.length; i++) {
       //get player data
@@ -1588,7 +1587,6 @@ function updateRadarChart(data) {
 }
 
 function updateTreeChart(data) {
-
   console.log("in updtreechart");
 
   let treeData, dataTotals;
@@ -1669,97 +1667,110 @@ function updateTreeChart(data) {
 
   // Transform flat treeData into hierarchical structure
   const hierarchyData = {
-      name: "Total Damage", value: treeData.find(d => d.label === "Total Damage").value,
-      children: [
-          { name: "Magic Damage", value: treeData.find(d => d.label === "Magic Damage").value,
-              children: [
-                  { name: "Magic Champion Damage", value: treeData.find(d => d.label === "Magic Champion Damage").value },
-              ],
-           },
-          { name: "Physical Damage", value: treeData.find(d => d.label === "Physical Damage").value, 
-              children: [
-                  { name: "Physical Champion Damage", value: treeData.find(d => d.label === "Physical Champion Damage").value },
-              ],
+    name: "Total Damage",
+    value: treeData.find((d) => d.label === "Total Damage").value,
+    children: [
+      {
+        name: "Magic Damage",
+        value: treeData.find((d) => d.label === "Magic Damage").value,
+        children: [
+          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
+        ],
+      },
+      {
+        name: "Physical Damage",
+        value: treeData.find((d) => d.label === "Physical Damage").value,
+        children: [
+          {
+            name: "Physical Champion Damage",
+            value: treeData.find((d) => d.label === "Physical Champion Damage").value,
           },
-          { name: "True Damage", value: treeData.find(d => d.label === "True Damage").value, 
-              children: [
-                  { name: "True Champion Damage", value: treeData.find(d => d.label === "True Champion Damage").value },
-              ],
-          },
-      ],
+        ],
+      },
+      {
+        name: "True Damage",
+        value: treeData.find((d) => d.label === "True Damage").value,
+        children: [
+          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
+        ],
+      },
+    ],
   };
 
   // based off example tree chart code
 
   console.log("hierarchyData", hierarchyData);
 
-  const root = d3.hierarchy(hierarchyData)
-    .sum(d => d.value || 0.01) // Set the value for the hierarchy layout
+  const root = d3
+    .hierarchy(hierarchyData)
+    .sum((d) => d.value || 0.01) // Set the value for the hierarchy layout
     .sort((a, b) => b.height - a.height || b.value - a.value); // Optional sorting
 
   console.log("root", root);
 
   // Apply the treemap layout
-  const treemapLayout = d3.treemap()
+  const treemapLayout = d3
+    .treemap()
     .size([width, height])
     .tile(d3.treemapBinary)
     .paddingInner(0) // Reduced inner padding
     .paddingOuter(0);
 
-
   treemapLayout(root);
 
-    console.log("Treemap layout nodes:", root.leaves());
+  console.log("Treemap layout nodes:", root.leaves());
 
   // Define a color scale for the tree map white to #85d0ff
-  const color = d3.scaleLinear()
+  const color = d3
+    .scaleLinear()
     //0 to treeData.values max
-    .domain([0, d3.max(treeData, d => d.value)])
+    .domain([0, d3.max(treeData, (d) => d.value)])
     .range(["white", "#85d0ff"]);
 
   // Create groups for each node
-  const cell = svgTree.selectAll("g")
-      .data(root.leaves()) // Use only the leaf nodes for rectangles
-      .enter()
-      .append("g")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+  const cell = svgTree
+    .selectAll("g")
+    .data(root.leaves()) // Use only the leaf nodes for rectangles
+    .enter()
+    .append("g")
+    .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
 
   console.log("cell", cell);
   // Draw rectangles
-  cell.append("rect")
-      .attr("width", d => d.x1 - d.x0)
-      .attr("height", d => d.y1 - d.y0)
-      .attr("fill", d => {
-          // Find the parent node
-          while (d.depth > 1) d = d.parent;
-          return color(d.value);
-      })
-      .attr("stroke", "#ccc");
+  cell
+    .append("rect")
+    .attr("width", (d) => d.x1 - d.x0)
+    .attr("height", (d) => d.y1 - d.y0)
+    .attr("fill", (d) => {
+      // Find the parent node
+      while (d.depth > 1) d = d.parent;
+      return color(d.value);
+    })
+    .attr("stroke", "#ccc");
 
   console.log("rect");
 
   // Add labels to each rectangle
-  cell.append("text")
-      .attr("x", 4)
-      .attr("y", 14)
-      .style("font-size", "12px")
-      .text(d => d.data.name)
-      .append("tspan")
-      .attr("x", 4)
-      .attr("y", 25)
-      .text(d => d.value);
+  cell
+    .append("text")
+    .attr("x", 4)
+    .attr("y", 14)
+    .style("font-size", "12px")
+    .text((d) => d.data.name)
+    .append("tspan")
+    .attr("x", 4)
+    .attr("y", 25)
+    .text((d) => d.value);
 
   console.log("text");
 
   // Add tooltips
-  cell.append("title")
-      .text(d => `${d.data.name}\n${d.value}`);
+  cell.append("title").text((d) => `${d.data.name}\n${d.value}`);
 
   console.log("title");
 }
 
 function updateTreeChart(data) {
-
   console.log("in updtreechart");
 
   let treeData, dataTotals;
@@ -1840,91 +1851,105 @@ function updateTreeChart(data) {
 
   // Transform flat treeData into hierarchical structure
   const hierarchyData = {
-      name: "Total Damage", value: treeData.find(d => d.label === "Total Damage").value,
-      children: [
-          { name: "Magic Damage", value: treeData.find(d => d.label === "Magic Damage").value,
-              children: [
-                  { name: "Magic Champion Damage", value: treeData.find(d => d.label === "Magic Champion Damage").value },
-              ],
-           },
-          { name: "Physical Damage", value: treeData.find(d => d.label === "Physical Damage").value, 
-              children: [
-                  { name: "Physical Champion Damage", value: treeData.find(d => d.label === "Physical Champion Damage").value },
-              ],
+    name: "Total Damage",
+    value: treeData.find((d) => d.label === "Total Damage").value,
+    children: [
+      {
+        name: "Magic Damage",
+        value: treeData.find((d) => d.label === "Magic Damage").value,
+        children: [
+          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
+        ],
+      },
+      {
+        name: "Physical Damage",
+        value: treeData.find((d) => d.label === "Physical Damage").value,
+        children: [
+          {
+            name: "Physical Champion Damage",
+            value: treeData.find((d) => d.label === "Physical Champion Damage").value,
           },
-          { name: "True Damage", value: treeData.find(d => d.label === "True Damage").value, 
-              children: [
-                  { name: "True Champion Damage", value: treeData.find(d => d.label === "True Champion Damage").value },
-              ],
-          },
-      ],
+        ],
+      },
+      {
+        name: "True Damage",
+        value: treeData.find((d) => d.label === "True Damage").value,
+        children: [
+          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
+        ],
+      },
+    ],
   };
 
   // based off example tree chart code
 
   console.log("hierarchyData", hierarchyData);
 
-  const root = d3.hierarchy(hierarchyData)
-    .sum(d => d.value || 0.01) // Set the value for the hierarchy layout
+  const root = d3
+    .hierarchy(hierarchyData)
+    .sum((d) => d.value || 0.01) // Set the value for the hierarchy layout
     .sort((a, b) => b.height - a.height || b.value - a.value); // Optional sorting
 
   console.log("root", root);
 
   // Apply the treemap layout
-  const treemapLayout = d3.treemap()
+  const treemapLayout = d3
+    .treemap()
     .size([width, height])
     .tile(d3.treemapBinary)
     .paddingInner(0) // Reduced inner padding
     .paddingOuter(0);
 
-
   treemapLayout(root);
 
-    console.log("Treemap layout nodes:", root.leaves());
+  console.log("Treemap layout nodes:", root.leaves());
 
   // Define a color scale for the tree map white to #85d0ff
-  const color = d3.scaleLinear()
+  const color = d3
+    .scaleLinear()
     //0 to treeData.values max
-    .domain([0, d3.max(treeData, d => d.value)])
+    .domain([0, d3.max(treeData, (d) => d.value)])
     .range(["white", "#85d0ff"]);
 
   // Create groups for each node
-  const cell = svgTree.selectAll("g")
-      .data(root.leaves()) // Use only the leaf nodes for rectangles
-      .enter()
-      .append("g")
-      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+  const cell = svgTree
+    .selectAll("g")
+    .data(root.leaves()) // Use only the leaf nodes for rectangles
+    .enter()
+    .append("g")
+    .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
 
   console.log("cell", cell);
   // Draw rectangles
-  cell.append("rect")
-      .attr("width", d => d.x1 - d.x0)
-      .attr("height", d => d.y1 - d.y0)
-      .attr("fill", d => {
-          // Find the parent node
-          while (d.depth > 1) d = d.parent;
-          return color(d.value);
-      })
-      .attr("stroke", "#ccc");
+  cell
+    .append("rect")
+    .attr("width", (d) => d.x1 - d.x0)
+    .attr("height", (d) => d.y1 - d.y0)
+    .attr("fill", (d) => {
+      // Find the parent node
+      while (d.depth > 1) d = d.parent;
+      return color(d.value);
+    })
+    .attr("stroke", "#ccc");
 
   console.log("rect");
 
   // Add labels to each rectangle
-  cell.append("text")
-      .attr("x", 4)
-      .attr("y", 14)
-      .style("font-size", "12px")
-      .text(d => d.data.name)
-      .append("tspan")
-      .attr("x", 4)
-      .attr("y", 25)
-      .text(d => d.value);
+  cell
+    .append("text")
+    .attr("x", 4)
+    .attr("y", 14)
+    .style("font-size", "12px")
+    .text((d) => d.data.name)
+    .append("tspan")
+    .attr("x", 4)
+    .attr("y", 25)
+    .text((d) => d.value);
 
   console.log("text");
 
   // Add tooltips
-  cell.append("title")
-      .text(d => `${d.data.name}\n${d.value}`);
+  cell.append("title").text((d) => `${d.data.name}\n${d.value}`);
 
   console.log("title");
 }
@@ -2012,7 +2037,6 @@ function displayData(data) {
   // Call each update function with the API data as needed
   console.log("data", data);
   update(data);
-
 
   matches.push("Select a match");
 
