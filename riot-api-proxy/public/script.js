@@ -6,7 +6,7 @@ const ANIMATION_DUATION = 300;
 
 const radius = 100;
 
-let svgBar, svgLine, svgArea, svgScatter, svgHeatmap, svgDualBar;
+let svgBar, svgLine, svgArea, svgScatter, svgHeatmap, svgDualBar, svgRadar, svgTree;
 let isDataLoaded = false,
   loadingData = false;
 
@@ -238,6 +238,13 @@ function setup() {
     .attr("height", CHART_HEIGHT)
     .append("g")
     .attr("transform", `translate(${CHART_WIDTH / 2}, ${CHART_HEIGHT / 2})`);
+
+  svgTree = d3
+    .select("#TreeChart-div")
+    .append("svg")
+    .attr("width", CHART_WIDTH)
+    .attr("height", CHART_HEIGHT)
+    .append("g");
 }
 
 /**
@@ -248,7 +255,11 @@ function update(data) {
   updateBarChart(data);
   updateLineChart(data);
   updateScatterPlot(data);
+  updateHeatmap(data);
   updateDualBarChart(data);
+  updateRadarChart(data);
+  updateTreeChart(data);
+
 }
 
 /**
@@ -1014,6 +1025,8 @@ function updateHeatmap(data) {
 function updateDualBarChart(data) {
   let dataSelf, dataOpponent;
 
+  let count = 0;
+
   //averages data
   if (selectedMatch == null) {
     // Calculate averages
@@ -1021,6 +1034,7 @@ function updateDualBarChart(data) {
 
     playerTotals = new Map();
     opponentTotals = new Map();
+
 
     for (let i = 0; i < data.singleMatchData.length; i++) {
       //get player data
@@ -1030,6 +1044,8 @@ function updateDualBarChart(data) {
       if (selectedChampion !== null && playerData.championName !== selectedChampion) {
         continue;
       }
+
+      count++;
 
       //find opponent w/ matching lane
       const opponentData = match.info.participants.find(
@@ -1057,11 +1073,11 @@ function updateDualBarChart(data) {
 
     //calculate averages
     for (let [key, value] of playerTotals) {
-      playerTotals.set(key, value / data.singleMatchData.length);
+      playerTotals.set(key, value / count);
     }
 
     for (let [key, value] of opponentTotals) {
-      opponentTotals.set(key, value / data.singleMatchData.length);
+      opponentTotals.set(key, value / count);
     }
 
     dataSelf = [
@@ -1367,6 +1383,177 @@ function updateRadarChart(data) {
     .style("fill-opacity", 0.8);
 }
 
+function updateTreeChart(data) {
+
+  console.log("in updtreechart");
+
+  let treeData, dataTotals;
+
+  let count = 0;
+
+  //averages data
+  if (selectedMatch == null) {
+    // Calculate averages
+    const puuid = data.puuidData;
+
+    dataTotals = new Map();
+
+    for (let i = 0; i < data.singleMatchData.length; i++) {
+      //get player data
+      const match = data.singleMatchData[i];
+      const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
+
+      if (selectedChampion !== null && playerData.championName !== selectedChampion) {
+        continue;
+      }
+
+      count++;
+
+      //add player data
+      for (let [key, value] of Object.entries(playerData)) {
+        if (dataTotals.has(key)) {
+          dataTotals.set(key, dataTotals.get(key) + value);
+        } else {
+          dataTotals.set(key, value);
+        }
+      }
+    }
+
+    //calculate averages
+    for (let [key, value] of dataTotals) {
+      dataTotals.set(key, value / count);
+    }
+
+    for (let [key, value] of opponentTotals) {
+      opponentTotals.set(key, value / count);
+    }
+
+    treeData = [
+      { label: "Total Damage", value: dataTotals.get("totalDamageDealt") },
+      { label: "Magic Damage", value: dataTotals.get("magicDamageDealt") },
+      { label: "Physical Damage", value: dataTotals.get("physicalDamageDealt") },
+      { label: "True Damage", value: dataTotals.get("trueDamageDealt") },
+      { label: "Magic Champion Damage", value: dataTotals.get("magicDamageDealtToChampions") },
+      { label: "Physical Champion Damage", value: dataTotals.get("physicalDamageDealtToChampions") },
+      { label: "True Champion Damage", value: dataTotals.get("trueDamageDealtToChampions") },
+    ];
+  }
+  //specific match data
+  else {
+    const match = data.singleMatchData.find((match) => match.info.gameId === selectedMatch);
+    const puuid = data.puuidData;
+    const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
+    treeData = [
+      { label: "Total Damage", value: playerData.totalDamageDealt },
+      { label: "Magic Damage", value: playerData.magicDamageDealt },
+      { label: "Physical Damage", value: playerData.physicalDamageDealt },
+      { label: "True Damage", value: playerData.trueDamageDealt },
+      { label: "Magic Champion Damage", value: playerData.magicDamageDealtToChampions },
+      { label: "Physical Champion Damage", value: playerData.physicalDamageDealtToChampions },
+      { label: "True Champion Damage", value: playerData.trueDamageDealtToChampions },
+    ];
+  }
+
+  console.log("treeData", treeData);
+  //chat gpt aided in base generation, improvements by us
+
+  const width = 400;
+  const height = 600;
+
+  // Clear previous elements
+  svgTree.selectAll("*").remove();
+
+  // Transform flat treeData into hierarchical structure
+  const hierarchyData = {
+      name: "Total Damage", value: treeData.find(d => d.label === "Total Damage").value,
+      children: [
+          { name: "Magic Damage", value: treeData.find(d => d.label === "Magic Damage").value,
+              children: [
+                  { name: "Magic Champion Damage", value: treeData.find(d => d.label === "Magic Champion Damage").value },
+              ],
+           },
+          { name: "Physical Damage", value: treeData.find(d => d.label === "Physical Damage").value, 
+              children: [
+                  { name: "Physical Champion Damage", value: treeData.find(d => d.label === "Physical Champion Damage").value },
+              ],
+          },
+          { name: "True Damage", value: treeData.find(d => d.label === "True Damage").value, 
+              children: [
+                  { name: "True Champion Damage", value: treeData.find(d => d.label === "True Champion Damage").value },
+              ],
+          },
+      ],
+  };
+
+  // based off example tree chart code
+
+  console.log("hierarchyData", hierarchyData);
+
+  const root = d3.hierarchy(hierarchyData)
+    .sum(d => d.value || 0.01) // Set the value for the hierarchy layout
+    .sort((a, b) => b.height - a.height || b.value - a.value); // Optional sorting
+
+  console.log("root", root);
+
+  // Apply the treemap layout
+  const treemapLayout = d3.treemap()
+    .size([width, height])
+    .tile(d3.treemapBinary)
+    .paddingInner(0) // Reduced inner padding
+    .paddingOuter(0);
+
+
+  treemapLayout(root);
+
+    console.log("Treemap layout nodes:", root.leaves());
+
+  // Define a color scale for the tree map white to #85d0ff
+  const color = d3.scaleLinear()
+    //0 to treeData.values max
+    .domain([0, d3.max(treeData, d => d.value)])
+    .range(["white", "#85d0ff"]);
+
+  // Create groups for each node
+  const cell = svgTree.selectAll("g")
+      .data(root.leaves()) // Use only the leaf nodes for rectangles
+      .enter()
+      .append("g")
+      .attr("transform", d => `translate(${d.x0},${d.y0})`);
+
+  console.log("cell", cell);
+  // Draw rectangles
+  cell.append("rect")
+      .attr("width", d => d.x1 - d.x0)
+      .attr("height", d => d.y1 - d.y0)
+      .attr("fill", d => {
+          // Find the parent node
+          while (d.depth > 1) d = d.parent;
+          return color(d.value);
+      })
+      .attr("stroke", "#ccc");
+
+  console.log("rect");
+
+  // Add labels to each rectangle
+  cell.append("text")
+      .attr("x", 4)
+      .attr("y", 14)
+      .style("font-size", "12px")
+      .text(d => d.data.name)
+      .append("tspan")
+      .attr("x", 4)
+      .attr("y", 25)
+      .text(d => d.value);
+
+  console.log("text");
+
+  // Add tooltips
+  cell.append("title")
+      .text(d => `${d.data.name}\n${d.value}`);
+
+  console.log("title");
+}
+
 /**
  * Toggle the chart section based on data loaded status
  *
@@ -1406,6 +1593,8 @@ function changeSelectedMatch() {
   updateScatterPlot(globalData);
   // updateHeatmap(globalData);
   updateDualBarChart(globalData);
+  updateRadarChart(globalData);
+  updateTreeChart(globalData);
 }
 
 ////// Riot API Proxy Code //////
@@ -1447,12 +1636,8 @@ document.getElementById("riotForm").addEventListener("submit", async function (e
 function displayData(data) {
   // Call each update function with the API data as needed
   console.log("data", data);
-  updateBarChart(data);
-  updateLineChart(data);
-  updateScatterPlot(data);
-  updateHeatmap(data);
-  updateDualBarChart(data);
-  updateRadarChart(data);
+  update(data);
+
 
   matches.push("Select a match");
 
