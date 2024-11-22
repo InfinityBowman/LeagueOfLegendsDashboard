@@ -684,6 +684,9 @@ function updateScatterPlot(data) {
  * update the calendar heatmap.
  */
 function updateHeatmap(data) {
+  // Clear existing chart elements
+  svgHeatmap.selectAll("*").remove();
+
   if (!data || data.singleMatchData.length === 0) return;
   const heatmapData = d3
     .rollups(
@@ -1294,8 +1297,6 @@ function updateRadarChart(data) {
     { label: "Gold/Min", value: opponentGoldPerMin, average: avgOpponentGoldPerMin },
     { label: "CS/Min", value: opponentCsPerMin, average: avgOpponentCsPerMin },
   ];
-
-  console.log(dataSelf);
 
   const NUM_OF_SIDES = 7,
     NUM_OF_LEVEL = 4,
