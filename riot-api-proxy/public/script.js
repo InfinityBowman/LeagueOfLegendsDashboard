@@ -70,35 +70,10 @@ function setup() {
     .style("fill", "white");
 
   //add legend for bar chart
-  svgBar
-    .append("rect")
-    .attr("x", 130)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#85d0ff");
-  svgBar
-    .append("text")
-    .attr("x", 160)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Wins")
-    .style("fill", "white");
-  svgBar
-    .append("rect")
-    .attr("x", 200)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#e54787");
-  svgBar
-    .append("text")
-    .attr("x", 230)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Losses")
-    .style("fill", "white");
-
+  svgBar.append("rect").attr("x", 130).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
+  svgBar.append("text").attr("x", 160).attr("y", -15).attr("font-size", 12).text("Wins").style("fill", "white");
+  svgBar.append("rect").attr("x", 200).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
+  svgBar.append("text").attr("x", 230).attr("y", -15).attr("font-size", 12).text("Losses").style("fill", "white");
 
   //svg for line chart
   svgLine = d3
@@ -129,34 +104,10 @@ function setup() {
     .style("fill", "white");
 
   // legend for line chart
-  svgLine
-    .append("rect")
-    .attr("x", 130)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#85d0ff");
-  svgLine
-    .append("text")
-    .attr("x", 160)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Wins")
-    .style("fill", "white");
-  svgLine
-    .append("rect")
-    .attr("x", 200)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#e54787");
-  svgLine
-    .append("text")
-    .attr("x", 230)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Losses")
-    .style("fill", "white");
+  svgLine.append("rect").attr("x", 130).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
+  svgLine.append("text").attr("x", 160).attr("y", -15).attr("font-size", 12).text("Wins").style("fill", "white");
+  svgLine.append("rect").attr("x", 200).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
+  svgLine.append("text").attr("x", 230).attr("y", -15).attr("font-size", 12).text("Losses").style("fill", "white");
 
   //svg for scatter plot
   svgScatter = d3
@@ -186,35 +137,11 @@ function setup() {
     .text("Kills")
     .style("fill", "white");
 
-    // legend for line chart
-    svgScatter
-    .append("rect")
-    .attr("x", 130)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#85d0ff");
-  svgScatter
-    .append("text")
-    .attr("x", 160)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Wins")
-    .style("fill", "white");
-  svgScatter
-    .append("rect")
-    .attr("x", 200)
-    .attr("y", -30)
-    .attr("width", 20)
-    .attr("height", 20)
-    .attr("fill", "#e54787");
-  svgScatter
-    .append("text")
-    .attr("x", 230)
-    .attr("y", -15)
-    .attr("font-size", 12)
-    .text("Losses")
-    .style("fill", "white");
+  // legend for line chart
+  svgScatter.append("rect").attr("x", 130).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
+  svgScatter.append("text").attr("x", 160).attr("y", -15).attr("font-size", 12).text("Wins").style("fill", "white");
+  svgScatter.append("rect").attr("x", 200).attr("y", -30).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
+  svgScatter.append("text").attr("x", 230).attr("y", -15).attr("font-size", 12).text("Losses").style("fill", "white");
 
   svgHeatmap = d3
     .select("#CalendarHeatmap-div")
@@ -237,8 +164,13 @@ function setup() {
     .attr("width", CHART_WIDTH)
     .attr("height", CHART_HEIGHT)
     .append("g")
-    .attr("transform", `translate(${CHART_WIDTH / 2}, ${CHART_HEIGHT / 2})`);
+    .attr("transform", `translate(${150}, ${50})`);
 }
+
+const format = (value) => {
+  const formattedValue = d3.format(".2f")(value);
+  return formattedValue.replace(/\.0+$/, "").replace(/(\.\d*[1-9])0+$/, "$1");
+};
 
 /**
  * Render the visualizations
@@ -249,6 +181,7 @@ function update(data) {
   updateLineChart(data);
   updateScatterPlot(data);
   updateDualBarChart(data);
+  updateRadarChart(data);
 }
 
 /**
@@ -330,7 +263,9 @@ function updateBarChart(data) {
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.losses))
     .attr("fill", "#e54787")
-    .attr("stroke", function (d) {return d.name === selectedChampion ? "gold" : "white";})
+    .attr("stroke", function (d) {
+      return d.name === selectedChampion ? "gold" : "white";
+    })
     .attr("stroke-width", 2);
 
   // Append wins bars on top of losses
@@ -342,7 +277,9 @@ function updateBarChart(data) {
     .attr("width", xAxis.bandwidth())
     .attr("height", (d) => CHART_HEIGHT - yAxis(d.wins))
     .attr("fill", "#85d0ff")
-    .attr("stroke", function (d) {return d.name === selectedChampion ? "gold" : "white";})
+    .attr("stroke", function (d) {
+      return d.name === selectedChampion ? "gold" : "white";
+    })
     .attr("stroke-width", 2);
 
   // Add tooltip functionality to both sections
@@ -382,8 +319,7 @@ function updateBarChart(data) {
     .on("click", function (event, d) {
       if (selectedChampion === d.name) {
         selectedChampion = null;
-      }
-      else {
+      } else {
         selectedChampion = d.name;
       }
       update(data);
@@ -415,14 +351,10 @@ function updateLineChart(data) {
     })
     .filter(Boolean); // Remove any null entries in case the player wasn't found
 
-
-    console.log("line data before",lineData);
-    //filter out champion names
-    if (selectedChampion !== null) {
-      lineData = lineData.filter((d) => d.championName === selectedChampion);
-    }
-    console.log("line data after",lineData);
-    
+  //filter out champion names
+  if (selectedChampion !== null) {
+    lineData = lineData.filter((d) => d.championName === selectedChampion);
+  }
 
   // Define x-axis as 'games ago'
   const xAxis = d3
@@ -454,9 +386,6 @@ function updateLineChart(data) {
     .filter((d) => d !== null);
   xAxisGroup.call(d3.axisBottom(xAxis).tickValues(tickValues));
 
-  console.log(numberOfTicks);
-  // console.log(tickValues);
-
   // Append y-axis
   svgLine.select(".y-axis").remove();
   svgLine.append("g").attr("class", "y-axis").call(d3.axisLeft(yAxis));
@@ -483,11 +412,6 @@ function updateLineChart(data) {
   svgLine.selectAll("circle").remove();
   const points = svgLine.selectAll("circle").data(lineData);
   const radius = 7;
-
-  const format = (value) => {
-    const formattedValue = d3.format(".2f")(value);
-    return formattedValue.replace(/\.0$/, "");
-  };
 
   points
     .enter()
@@ -575,8 +499,7 @@ function updateLineChart(data) {
     .on("click", function (event, d) {
       if (selectedMatch === d.gameId) {
         selectedMatch = null;
-      }
-      else {
+      } else {
         selectedMatch = d.gameId;
       }
       update(data);
@@ -610,10 +533,10 @@ function updateScatterPlot(data) {
         : null;
     })
     .filter(Boolean); // Remove null entries if player wasn't found
-    //filter out champion names
-    if (selectedChampion !== null) {
-      scatterData = scatterData.filter((d) => d.championName === selectedChampion);
-    }
+  //filter out champion names
+  if (selectedChampion !== null) {
+    scatterData = scatterData.filter((d) => d.championName === selectedChampion);
+  }
 
   // Define x-axis for deaths
   const xAxis = d3
@@ -736,8 +659,7 @@ function updateScatterPlot(data) {
     .on("click", function (event, d) {
       if (selectedMatch === d.gameId) {
         selectedMatch = null;
-      }
-      else {
+      } else {
         selectedMatch = d.gameId;
       }
       update(data);
@@ -808,7 +730,7 @@ function updateHeatmap(data) {
       .domain([0.49, 0.51, 0.75]) // Define thresholds for the categories
       .range(["#e54787", "white", "#1dc49b", "#85d0ff"]); // Define colors for the categories
 
-    const format = (value) => {
+    const formatPercent = (value) => {
       const formattedValue = d3.format(".1%")(value);
       return formattedValue.replace(/\.0+%$/, "%");
     };
@@ -898,7 +820,7 @@ function updateHeatmap(data) {
             const winRateColor = colorFn(winRate); // Get the color from colorFn
             return `
             <div>${formatDate(d.date)}</div>
-            <div>Win Rate: <span style="color: ${winRateColor}">${format(winRate)}</span></div>
+            <div>Win Rate: <span style="color: ${winRateColor}">${formatPercent(winRate)}</span></div>
             <div>Record: ${d.wins} - ${d.losses}</div>
           `;
           })
@@ -1226,11 +1148,6 @@ function updateDualBarChart(data) {
     .attr("stroke", "white")
     .attr("stroke-dasharray", "4");
 
-  const format = (value) => {
-    const formattedValue = d3.format(".2f")(value);
-    return formattedValue.replace(/\.0$/, "");
-  };
-
   chartGroup
     .selectAll("rect")
     .on("mouseover", function (event, d) {
@@ -1265,114 +1182,402 @@ function updateDualBarChart(data) {
 }
 
 function updateRadarChart(data) {
-  // console.log(data);
-  // console.log(radius);
-  const radarData = [
-    { axis: "Kills", value: 30 },
-    { axis: "Deaths", value: 20 },
-    { axis: "Assists", value: 60 },
-    { axis: "Gold/Min", value: 340 },
-    { axis: "CS/Min", value: 8.5 },
+  // Clear existing chart elements
+  svgRadar.selectAll("*").remove();
+
+  let dataSelf, dataOpponent;
+  let chosenMatch = data.singleMatchData[0];
+  if (selectedMatch !== null) {
+    chosenMatch = data.singleMatchData.find((match) => match.info.gameId === selectedMatch);
+  }
+
+  // Calculate averages
+  const puuid = data.puuidData;
+
+  const chosenPlayerData = chosenMatch.info.participants.find((participant) => participant.puuid === puuid);
+  const chosenOpponentData = chosenMatch.info.participants.find(
+    (participant) =>
+      participant.individualPosition === chosenPlayerData.individualPosition && participant.puuid !== puuid
+  );
+  playerTotals = new Map();
+  opponentTotals = new Map();
+
+  for (let i = 0; i < data.singleMatchData.length; i++) {
+    //get player data
+    const match = data.singleMatchData[i];
+    const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
+
+    //find opponent w/ matching lane
+    const opponentData = match.info.participants.find(
+      (participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid
+    );
+
+    //add player data
+    for (let [key, value] of Object.entries(playerData)) {
+      if (playerTotals.has(key)) {
+        playerTotals.set(key, playerTotals.get(key) + value);
+      } else {
+        playerTotals.set(key, value);
+      }
+    }
+
+    //add opponent data
+    for (let [key, value] of Object.entries(opponentData)) {
+      if (opponentTotals.has(key)) {
+        opponentTotals.set(key, opponentTotals.get(key) + value);
+      } else {
+        opponentTotals.set(key, value);
+      }
+    }
+  }
+
+  //calculate averages
+  for (let [key, value] of playerTotals) {
+    playerTotals.set(key, value / data.singleMatchData.length);
+  }
+
+  for (let [key, value] of opponentTotals) {
+    opponentTotals.set(key, value / data.singleMatchData.length);
+  }
+
+  // Calculate gold/min and cs/min
+  const totalGameTime = playerTotals.get("timePlayed") / 60;
+
+  const avgPlayerGoldPerMin = playerTotals.get("goldEarned") / totalGameTime;
+  const playerGoldPerMin = chosenPlayerData.goldEarned / totalGameTime;
+  const avgPlayerCsPerMin = playerTotals.get("totalMinionsKilled") / totalGameTime;
+  const playerCsPerMin = chosenPlayerData.totalMinionsKilled / totalGameTime;
+
+  const avgOpponentGoldPerMin = opponentTotals.get("goldEarned") / totalGameTime;
+  const opponentGoldPerMin = chosenOpponentData.goldEarned / totalGameTime;
+  const avgOpponentCsPerMin = opponentTotals.get("totalMinionsKilled") / totalGameTime;
+  const opponentCsPerMin = chosenOpponentData.totalMinionsKilled / totalGameTime;
+
+  dataSelf = [
+    { label: "Kills", value: chosenPlayerData.kills, average: playerTotals.get("kills") },
+    { label: "Assists", value: chosenPlayerData.assists, average: playerTotals.get("assists") },
+    { label: "Deaths", value: chosenPlayerData.deaths, average: playerTotals.get("deaths") },
+    {
+      label: "Damage Taken",
+      value: chosenPlayerData.totalDamageTaken,
+      average: playerTotals.get("totalDamageTaken"),
+    },
+    {
+      label: "Total Damage",
+      value: chosenPlayerData.totalDamageDealt,
+      average: playerTotals.get("totalDamageDealt"),
+    },
+    { label: "Gold/Min", value: playerGoldPerMin, average: avgPlayerGoldPerMin },
+    { label: "CS/Min", value: playerCsPerMin, average: avgPlayerCsPerMin },
   ];
-  const radarOpponentData = [
-    { axis: "Kills", value: 30 },
-    { axis: "Deaths", value: 20 },
-    { axis: "Assists", value: 60 },
-    { axis: "Gold/Min", value: 340 },
-    { axis: "CS/Min", value: 8.5 },
+
+  dataOpponent = [
+    { label: "Kills", value: chosenOpponentData.kills, average: opponentTotals.get("kills") },
+    { label: "Assists", value: chosenOpponentData.assists, average: opponentTotals.get("assists") },
+    { label: "Deaths", value: chosenOpponentData.deaths, average: opponentTotals.get("deaths") },
+    {
+      label: "Damage Taken",
+      value: chosenOpponentData.totalDamageTaken,
+      average: opponentTotals.get("totalDamageTaken"),
+    },
+    {
+      label: "Total Damage",
+      value: chosenOpponentData.totalDamageTaken,
+      average: opponentTotals.get("totalDamageDealt"),
+    },
+    { label: "Gold/Min", value: opponentGoldPerMin, average: avgOpponentGoldPerMin },
+    { label: "CS/Min", value: opponentCsPerMin, average: avgOpponentCsPerMin },
   ];
 
-  const angleSlice = (Math.PI * 2) / radarData[0].length;
-  const maxValue = Math.max(...radarData.flat().map((d) => d.value));
-  const rScale = d3.scaleLinear().range([0, radius]).domain([0, maxValue]);
+  console.log(dataSelf);
 
-  const radarLine = d3
-    .lineRadial()
-    .curve(d3.curveLinearClosed)
-    .radius((d) => rScale(d.value))
-    .angle((d, i) => i * angleSlice);
+  const NUM_OF_SIDES = 7,
+    NUM_OF_LEVEL = 4,
+    size = CHART_HEIGHT,
+    offset = Math.PI,
+    polyangle = (Math.PI * 2) / NUM_OF_SIDES,
+    r = 0.8 * size,
+    r_0 = r * 0.75, // chart corner max radius
+    center = {
+      x: size / 2,
+      y: size / 2,
+    };
 
-  const axisGrid = svgRadar.append("g").attr("class", "axisWrapper");
+  const scale = (value, average) => {
+    const normalizedValue = (value / average) * (r_0 * 0.5);
+    return Math.min(Math.max(normalizedValue, 1), r_0);
+  };
 
-  axisGrid
-    .selectAll(".levels")
-    .data(d3.range(1, 6).reverse())
-    .enter()
-    .append("circle")
-    .attr("class", "gridCircle")
-    .attr("r", (d) => (radius / 5) * d)
-    .style("fill", "#CDCDCD")
-    .style("stroke", "#CDCDCD")
-    .style("fill-opacity", 0.1);
+  const generatePoint = ({ length, angle }) => {
+    const point = {
+      x: center.x + length * Math.sin(offset - angle),
+      y: center.y + length * Math.cos(offset - angle),
+    };
+    return point;
+  };
 
-  axisGrid
-    .selectAll(".axisLabel")
-    .data(d3.range(1, 6).reverse())
-    .enter()
-    .append("text")
-    .attr("class", "axisLabel")
-    .attr("x", 4)
-    .attr("y", (d) => (-d * radius) / 5)
-    .attr("dy", "0.4em")
-    .style("font-size", "10px")
-    .attr("fill", "#737373")
-    .text((d) => ((maxValue / 5) * d).toFixed(2));
+  let points = [];
+  const length = 100;
+  for (let vertex = 0; vertex < NUM_OF_SIDES; vertex++) {
+    const theta = vertex * polyangle;
 
-  const axis = axisGrid.selectAll(".axis").data(radarData[0]).enter().append("g").attr("class", "axis");
+    points.push(generatePoint({ length, angle: theta }));
+  }
 
-  axis
-    .append("line")
-    .attr("x1", 0)
-    .attr("y1", 0)
-    .attr("x2", (d, i) => rScale(maxValue) * Math.cos(angleSlice * i - Math.PI / 2))
-    .attr("y2", (d, i) => rScale(maxValue) * Math.sin(angleSlice * i - Math.PI / 2))
-    .attr("class", "line")
-    .style("stroke", "white")
-    .style("stroke-width", "2px");
+  const drawPath = (points, parent, strokeColor, fillColor) => {
+    if (fillColor === undefined) {
+      fillColor = "none";
+    }
+    if (strokeColor === undefined) {
+      strokeColor = "black";
+    }
+    const lineGenerator = d3
+      .line()
+      .x((d) => d.x)
+      .y((d) => d.y);
 
-  axis
-    .append("text")
-    .attr("class", "legend")
-    .style("font-size", "11px")
-    .attr("text-anchor", "middle")
-    .attr("dy", "0.35em")
-    .attr("x", (d, i) => rScale(maxValue * 1.1) * Math.cos(angleSlice * i - Math.PI / 2))
-    .attr("y", (d, i) => rScale(maxValue * 1.1) * Math.sin(angleSlice * i - Math.PI / 2))
-    .text((d) => d.axis);
+    parent.append("path").attr("d", lineGenerator(points)).style("fill", fillColor).style("stroke", strokeColor);
+  };
 
-  const radarWrapper = svgRadar
-    .selectAll(".radarWrapper")
-    .data(radarData)
-    .enter()
-    .append("g")
-    .attr("class", "radarWrapper");
+  const genTicks = (levels) => {
+    const ticks = [];
+    const step = 100 / levels;
+    for (let i = 0; i <= levels; i++) {
+      const num = step * i;
+      if (Number.isInteger(step)) {
+        ticks.push(num);
+      } else {
+        ticks.push(num.toFixed(2));
+      }
+    }
+    return ticks;
+  };
 
-  radarWrapper
-    .append("path")
-    .attr("class", "radarArea")
-    .attr("d", (d) => radarLine(d))
-    .style("fill", (d, i) => d3.schemeCategory10[i])
-    .style("fill-opacity", 0.1);
+  const ticks = genTicks(NUM_OF_LEVEL);
 
-  radarWrapper
-    .append("path")
-    .attr("class", "radarStroke")
-    .attr("d", (d) => radarLine(d))
-    .style("stroke-width", "2px")
-    .style("stroke", (d, i) => d3.schemeCategory10[i])
-    .style("fill", "none");
+  const generateAndDrawLevels = (levelsCount, sideCount) => {
+    for (let level = levelsCount; level >= 1; level--) {
+      const hyp = (level / levelsCount) * r_0;
+      const points = [];
+      for (let vertex = 0; vertex < sideCount; vertex++) {
+        const theta = vertex * polyangle;
 
-  radarWrapper
-    .selectAll(".radarCircle")
-    .data((d) => d)
-    .enter()
-    .append("circle")
-    .attr("class", "radarCircle")
-    .attr("r", 3)
-    .attr("cx", (d, i) => rScale(d.value) * Math.cos(angleSlice * i - Math.PI / 2))
-    .attr("cy", (d, i) => rScale(d.value) * Math.sin(angleSlice * i - Math.PI / 2))
-    .style("fill", (d, i, j) => d3.schemeCategory10[j])
-    .style("fill-opacity", 0.8);
+        points.push(generatePoint({ length: hyp, angle: theta }));
+      }
+      const group = svgRadar.append("g").attr("class", "levels");
+      let fillColor = "#2c274f";
+      if (level % 2 !== 0) {
+        fillColor = "#1f183e";
+      }
+      drawPath([...points, points[0]], group, "grey", fillColor);
+    }
+  };
+
+  const generateAndDrawLines = (sideCount) => {
+    const group = svgRadar.append("g").attr("class", "grid-lines");
+    for (let vertex = 1; vertex <= sideCount; vertex++) {
+      const theta = vertex * polyangle;
+      const point = generatePoint({ length: r_0, angle: theta });
+
+      drawPath([center, point], group, "grey");
+    }
+  };
+
+  const drawText = (text, point, isAxis, group) => {
+    if (isAxis) {
+      const xSpacing = text.toString().includes(".") ? 30 : 22;
+      group
+        .append("text")
+        .attr("x", point.x - xSpacing)
+        .attr("y", point.y + 5)
+        .html(text)
+        .style("text-anchor", "middle")
+        .attr("fill", "white")
+        .style("font-size", "12px")
+        .style("font-family", "sans-serif");
+    } else {
+      group
+        .append("text")
+        .attr("x", point.x)
+        .attr("y", point.y)
+        .html(text)
+        .style("text-anchor", "middle")
+        .attr("fill", "white")
+        .style("font-size", "12px")
+        .style("font-family", "sans-serif");
+    }
+  };
+
+  const drawAxis = (ticks, levelsCount) => {
+    const groupL = svgRadar.append("g").attr("class", "tick-lines");
+    const point = generatePoint({ length: r_0, angle: 0 });
+    drawPath([center, point], groupL, "red"); // vertical line
+
+    const groupT = svgRadar.append("g").attr("class", "ticks");
+
+    ticks.forEach((d, i) => {
+      const r = (i / levelsCount) * r_0;
+      const p = generatePoint({ length: r, angle: 0 });
+      const points = [
+        p,
+        {
+          ...p,
+          x: p.x - 10,
+        },
+      ];
+      drawPath(points, groupL, "red"); // horizontal ticks
+      drawText(d, p, true, groupT);
+    });
+  };
+
+  const drawCircles = (points, fillColor) => {
+    svgRadar
+      .append("g")
+      .attr("class", "indic")
+      .selectAll("circle")
+      .data(points)
+      .enter()
+      .append("circle")
+      .attr("cx", (d) => d.x)
+      .attr("cy", (d) => d.y)
+      .attr("r", 6)
+      .style("opacity", 0)
+      .style("fill", d3.color(fillColor).copy({ opacity: 1 }));
+  };
+
+  const drawData = (dataset, n, strokeColor, fillColor) => {
+    const points = [];
+    dataset.forEach((d, i) => {
+      const len = scale(d.value, d.average);
+      const theta = i * ((2 * Math.PI) / n);
+
+      points.push({
+        ...generatePoint({ length: len, angle: theta }),
+        value: d.value,
+        label: d.label,
+      });
+    });
+
+    const group = svgRadar.append("g").attr("class", `shape shape-${strokeColor.replace("#", "")}`);
+
+    drawPath([...points, points[0]], group, strokeColor, fillColor);
+    drawCircles(points, fillColor);
+
+    const quadtree = d3
+      .quadtree()
+      .x((d) => d.x)
+      .y((d) => d.y)
+      .addAll(points);
+
+    group.on("mousemove", function (event, d) {
+      const [mx, my] = d3.pointer(event);
+      const closest = quadtree.find(mx, my);
+      if (closest) {
+        tooltip.transition().duration(50).style("opacity", 1);
+
+        const circleElement = d3
+          .selectAll("circle")
+          .filter((d) => d === closest)
+          .node();
+
+        // this is some bs
+        const circleRect = circleElement.getBoundingClientRect();
+        const tooltipRect = tooltip.node().getBoundingClientRect();
+        const tooltipX = circleRect.left + window.scrollX + circleRect.width / 2 - tooltipRect.width / 2;
+        const tooltipY = circleRect.top + window.scrollY - tooltipRect.height - 10;
+
+        tooltip
+          .html(() => {
+            return `<div>${closest.label}: ${format(closest.value)}</div>`;
+          })
+          .style("left", `${tooltipX}px`)
+          .style("top", `${tooltipY}px`)
+          .style("background-color", "rgba(0, 0, 0, 0.8)");
+
+        svgRadar.selectAll("circle").style("opacity", 0);
+        d3.selectAll("circle")
+          .filter((d) => d === closest)
+          .style("opacity", 1);
+      }
+    });
+
+    group.on("mouseleave", function () {
+      tooltip.transition().duration(200).style("opacity", 0);
+      svgRadar.selectAll("circle").style("opacity", 0);
+    });
+  };
+
+  const drawLabels = (dataset, sideCount) => {
+    const groupL = svgRadar.append("g").attr("class", "labels");
+    for (let vertex = 0; vertex < sideCount; vertex++) {
+      const angle = vertex * polyangle;
+      const label = dataset[vertex].label;
+      let lengthMod = 0.75;
+      if (vertex === 0) {
+        lengthMod = 0.65;
+      }
+      if (vertex === sideCount / 2) {
+        lengthMod = 0.7;
+      }
+      const point = generatePoint({ length: lengthMod * size, angle });
+
+      drawText(label, point, false, groupL);
+    }
+  };
+  const addLegend = (legendData) => {
+    const legend = svgRadar.append("g").attr("class", "legend").attr("transform", "translate(10, 10)");
+
+    legendData.forEach((d, i) => {
+      const legendItem = legend.append("g").attr("class", "legend-item");
+
+      legendItem
+        .append("rect")
+        .attr("x", -i * 70 - 90)
+        .attr("y", -60)
+        .attr("width", 20)
+        .attr("height", 20)
+        .style("fill", d.color)
+        .style("cursor", "pointer")
+        .on("click", function () {
+          const shape = svgRadar.selectAll(`.shape-${d.color.replace("#", "")}`);
+          const isVisible = shape.style("display") !== "none";
+          shape.style("display", isVisible ? "none" : "block");
+
+          d3.select(this).style("fill", isVisible ? d.colorInactive : d.color);
+        });
+
+      legendItem
+        .append("text")
+        .attr("x", -i * 70 - 60)
+        .attr("y", -50)
+        .attr("dy", "0.35em")
+        .style("text-anchor", "start")
+        .style("font-size", "12px")
+        .style("fill", "white")
+        .text(d.text)
+        .on("click", function () {
+          const shape = svgRadar.selectAll(`.shape-${d.color.replace("#", "")}`);
+          const isVisible = shape.style("display") !== "none";
+          shape.style("display", isVisible ? "none" : "block");
+
+          d3.select(this).style("fill", isVisible ? d.color : d.colorInactive);
+        });
+    });
+  };
+
+  const legendData = [
+    { color: "#e54787", colorInactive: "#e5478765", text: "Opponent" },
+    { color: "#85d0ff", colorInactive: "#85d0ff65", text: "You" },
+  ];
+
+  // Call the addLegend function with the legend data
+  addLegend(legendData);
+  generateAndDrawLevels(NUM_OF_LEVEL, NUM_OF_SIDES);
+  generateAndDrawLines(NUM_OF_SIDES);
+  // drawAxis(ticks, NUM_OF_LEVEL);
+  drawData(dataOpponent, NUM_OF_SIDES, "#e54787", "#e5478735");
+  drawData(dataSelf, NUM_OF_SIDES, "#85d0ff", "#85d0ff35");
+  drawLabels(dataSelf, NUM_OF_SIDES);
 }
 
 /**
@@ -1414,6 +1619,7 @@ function changeSelectedMatch() {
   updateScatterPlot(globalData);
   // updateHeatmap(globalData);
   updateDualBarChart(globalData);
+  updateRadarChart(globalData);
 }
 
 ////// Riot API Proxy Code //////

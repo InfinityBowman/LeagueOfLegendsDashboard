@@ -102,10 +102,6 @@ svg {
   fill: none;
 }
 
-text {
-  fill: black;
-}
-
 /* style of area charts */
 .area-chart {
   fill: rgb(79, 175, 211);
@@ -197,9 +193,13 @@ text {
 }
 
 .chart-style {
-  border-width: 2px; 
-  border-color: #ffffff; 
-  border-style: solid; 
-  width: 560px; 
+  border-width: 2px;
+  border-color: #ffffff;
+  border-style: solid;
+  width: 560px;
   margin: 10px;
+}
+
+.radar-visible {
+  opacity: 1;
 }
