@@ -172,6 +172,7 @@ function setup() {
     .attr("width", CHART_WIDTH)
     .attr("height", CHART_HEIGHT)
     .append("g");
+
 }
 
 const format = (value) => {
@@ -1091,7 +1092,7 @@ function updateDualBarChart(data) {
     .range([0, CHART_WIDTH])
     .padding(0.2);
 
-  const yScale = d3.scaleLinear().domain([0, 100]).range([CHART_HEIGHT, 0]);
+  const yScale = d3.scaleLinear().domain([0, 100]).range([CHART_HEIGHT-50, 0]);
 
   // Add top x-axis
   chartGroup
@@ -1106,7 +1107,7 @@ function updateDualBarChart(data) {
   // Add bottom x-axis
   chartGroup
     .append("g")
-    .attr("transform", `translate(0, ${CHART_HEIGHT})`)
+    .attr("transform", `translate(0, ${CHART_HEIGHT-50})`)
     .call(d3.axisBottom(xScale).tickSize(0))
     .selectAll("text")
     .attr("transform", "rotate(-30)")
@@ -1167,11 +1168,9 @@ function updateDualBarChart(data) {
       tooltip
         .html(() => {
           if (selectedMatch == null) {
-            return `<div>Your Average: ${format(d.selfValue)}</div><div>Opponent's Average: ${format(
-              d.opponentValue
-            )}</div>`;
+            return `<div>Opponent's Average: ${format(d.opponentValue)}</div><div>Your Average: ${format(d.selfValue)}</div>`;
           } else {
-            return `<div>You: ${d.selfValue}</div><div>Opponent: ${d.opponentValue}</div>`;
+            return `<div>Opponent: ${d.opponentValue}</div><div>You: ${d.selfValue}</div>`;
           }
         })
         .style("left", event.pageX + 10 + "px")
@@ -1188,6 +1187,11 @@ function updateDualBarChart(data) {
       d3.select(this).classed("scaled", false);
       tooltip.transition().duration(200).style("opacity", 0);
     });
+
+    svgDualBar.append("rect").attr("x", -50).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
+    svgDualBar.append("text").attr("x", -20).attr("y", 225).attr("font-size", 12).text("You").style("fill", "white");
+    svgDualBar.append("rect").attr("x", 20).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
+    svgDualBar.append("text").attr("x", 50).attr("y", 225).attr("font-size", 12).text("Opponent").style("fill", "white");
 }
 
 function updateRadarChart(data) {
@@ -1660,196 +1664,6 @@ function updateTreeChart(data) {
   console.log("treeData", treeData);
   //chat gpt aided in base generation, improvements by us
 
-  const width = 400;
-  const height = 600;
-
-  // Clear previous elements
-  svgTree.selectAll("*").remove();
-
-  // Transform flat treeData into hierarchical structure
-  const hierarchyData = {
-    name: "Total Damage",
-    value: treeData.find((d) => d.label === "Total Damage").value,
-    children: [
-      {
-        name: "Magic Damage",
-        value: treeData.find((d) => d.label === "Magic Damage").value,
-        children: [
-          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
-        ],
-      },
-      {
-        name: "Physical Damage",
-        value: treeData.find((d) => d.label === "Physical Damage").value,
-        children: [
-          {
-            name: "Physical Champion Damage",
-            value: treeData.find((d) => d.label === "Physical Champion Damage").value,
-          },
-        ],
-      },
-      {
-        name: "True Damage",
-        value: treeData.find((d) => d.label === "True Damage").value,
-        children: [
-          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
-        ],
-      },
-    ],
-  };
-
-  // based off example tree chart code
-
-  console.log("hierarchyData", hierarchyData);
-
-  const root = d3
-    .hierarchy(hierarchyData)
-    .sum((d) => d.value || 0.01) // Set the value for the hierarchy layout
-    .sort((a, b) => b.height - a.height || b.value - a.value); // Optional sorting
-
-  console.log("root", root);
-
-  // Apply the treemap layout
-  const treemapLayout = d3
-    .treemap()
-    .size([width, height])
-    .tile(d3.treemapBinary)
-    .paddingInner(0) // Reduced inner padding
-    .paddingOuter(0);
-
-  treemapLayout(root);
-
-  console.log("Treemap layout nodes:", root.leaves());
-
-  // Define a color scale for the tree map white to #85d0ff
-  const color = d3
-    .scaleLinear()
-    //0 to treeData.values max
-    .domain([0, d3.max(treeData, (d) => d.value)])
-    .range(["white", "#85d0ff"]);
-
-  // Create groups for each node
-  const cell = svgTree
-    .selectAll("g")
-    .data(root.leaves()) // Use only the leaf nodes for rectangles
-    .enter()
-    .append("g")
-    .attr("transform", (d) => `translate(${d.x0},${d.y0})`);
-
-  console.log("cell", cell);
-  // Draw rectangles
-  cell
-    .append("rect")
-    .attr("width", (d) => d.x1 - d.x0)
-    .attr("height", (d) => d.y1 - d.y0)
-    .attr("fill", (d) => {
-      // Find the parent node
-      while (d.depth > 1) d = d.parent;
-      return color(d.value);
-    })
-    .attr("stroke", "#ccc");
-
-  console.log("rect");
-
-  // Add labels to each rectangle
-  cell
-    .append("text")
-    .attr("x", 4)
-    .attr("y", 14)
-    .style("font-size", "12px")
-    .text((d) => d.data.name)
-    .append("tspan")
-    .attr("x", 4)
-    .attr("y", 25)
-    .text((d) => d.value);
-
-  console.log("text");
-
-  // Add tooltips
-  cell.append("title").text((d) => `${d.data.name}\n${d.value}`);
-
-  console.log("title");
-}
-
-function updateTreeChart(data) {
-  console.log("in updtreechart");
-
-  let treeData, dataTotals;
-
-  let count = 0;
-
-  //averages data
-  if (selectedMatch == null) {
-    // Calculate averages
-    const puuid = data.puuidData;
-
-    dataTotals = new Map();
-
-    for (let i = 0; i < data.singleMatchData.length; i++) {
-      //get player data
-      const match = data.singleMatchData[i];
-      const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
-
-      if (selectedChampion !== null && playerData.championName !== selectedChampion) {
-        continue;
-      }
-
-      count++;
-
-      //add player data
-      for (let [key, value] of Object.entries(playerData)) {
-        if (dataTotals.has(key)) {
-          dataTotals.set(key, dataTotals.get(key) + value);
-        } else {
-          dataTotals.set(key, value);
-        }
-      }
-    }
-
-    //calculate averages
-    for (let [key, value] of dataTotals) {
-      dataTotals.set(key, value / count);
-    }
-
-    for (let [key, value] of opponentTotals) {
-      opponentTotals.set(key, value / count);
-    }
-
-    treeData = [
-      { label: "Total Damage", value: dataTotals.get("totalDamageDealt") },
-      { label: "Magic Damage", value: dataTotals.get("magicDamageDealt") },
-      { label: "Physical Damage", value: dataTotals.get("physicalDamageDealt") },
-      { label: "True Damage", value: dataTotals.get("trueDamageDealt") },
-      { label: "Magic Champion Damage", value: dataTotals.get("magicDamageDealtToChampions") },
-      { label: "Physical Champion Damage", value: dataTotals.get("physicalDamageDealtToChampions") },
-      { label: "True Champion Damage", value: dataTotals.get("trueDamageDealtToChampions") },
-    ];
-  }
-  //specific match data
-  else {
-    const match = data.singleMatchData.find((match) => match.info.gameId === selectedMatch);
-    const puuid = data.puuidData;
-    const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
-    treeData = [
-      { label: "Total Damage", value: playerData.totalDamageDealt },
-      { label: "Magic Damage", value: playerData.magicDamageDealt },
-      { label: "Physical Damage", value: playerData.physicalDamageDealt },
-      { label: "True Damage", value: playerData.trueDamageDealt },
-      { label: "Magic Champion Damage", value: playerData.magicDamageDealtToChampions },
-      { label: "Physical Champion Damage", value: playerData.physicalDamageDealtToChampions },
-      { label: "True Champion Damage", value: playerData.trueDamageDealtToChampions },
-    ];
-  }
-
-  console.log("treeData", treeData);
-  //chat gpt aided in base generation, improvements by us
-
-  const width = 490;
-  const height = 270;
-
-  // Clear previous elements
-  svgTree.selectAll("*").remove();
-
   // Transform flat treeData into hierarchical structure
   const hierarchyData = {
     name: "Total Damage",
@@ -1859,7 +1673,8 @@ function updateTreeChart(data) {
         name: "Magic Damage",
         // value: treeData.find((d) => d.label === "Magic Damage").value,
         children: [
-          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
+          { name: "Magic Damage", 
+            value: treeData.find((d) => d.label === "Magic Champion Damage").value },
         ],
       },
       {
@@ -1867,7 +1682,7 @@ function updateTreeChart(data) {
         // value: treeData.find((d) => d.label === "Physical Damage").value,
         children: [
           {
-            name: "Physical Champion Damage",
+            name: "Physical Damage",
             value: treeData.find((d) => d.label === "Physical Champion Damage").value,
           },
         ],
@@ -1876,7 +1691,8 @@ function updateTreeChart(data) {
         name: "True Damage",
         // value: treeData.find((d) => d.label === "True Damage").value,
         children: [
-          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
+          { name: "True Damage", 
+            value: treeData.find((d) => d.label === "True Champion Damage").value },
         ],
       },
     ],
@@ -1885,6 +1701,12 @@ function updateTreeChart(data) {
   // based off example tree chart code
 
   console.log("hierarchyData", hierarchyData);
+
+  const width = 470;
+  const height = 240;
+
+  // Clear previous elements
+  svgTree.selectAll("*").remove();
 
   const root = d3
     .hierarchy(hierarchyData)
@@ -1953,7 +1775,53 @@ function updateTreeChart(data) {
   // Add tooltips
   cell.append("title").text((d) => `${d.data.name}\n${d.value}`);
 
-  console.log("title");
+  //add a horizontal gradient legend generated by copilot
+  const defs = svgTree.append("defs");
+
+  const linearGradient = defs
+    .append("linearGradient")
+    .attr("id", "linear-gradient")
+    .attr("x1", "0%")
+    .attr("y1", "0%")
+    .attr("x2", "100%")
+    .attr("y2", "0%");
+  linearGradient
+    .append("stop")
+    .attr("offset", "0%")
+    .attr("stop-color", "white");
+  linearGradient
+    .append("stop")
+    .attr("offset", "100%")
+    .attr("stop-color", "#85d0ff");
+
+  svgTree
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 250)
+    .attr("width", 470)
+    .attr("height", 20)
+    .style("fill", "url(#linear-gradient)");
+
+  svgTree
+    .append("text")
+    .attr("x", 0)
+    .attr("y", 285)
+    .text("0")
+    .style("fill", "white")
+    .style("font-size", "12px");
+
+  svgTree
+    .append("text")
+    //anchor to end of text
+    .attr("text-anchor", "end")
+    .attr("x", 470)
+    .attr("y", 285)
+    .text(d3.max(root.leaves(), (d) => d.value))
+    .style("fill", "white")
+    .style("font-size", "12px");
+
+
+  console.log("tree out");
 }
 
 /**
