@@ -1844,8 +1844,8 @@ function updateTreeChart(data) {
   console.log("treeData", treeData);
   //chat gpt aided in base generation, improvements by us
 
-  const width = 400;
-  const height = 600;
+  const width = 490;
+  const height = 270;
 
   // Clear previous elements
   svgTree.selectAll("*").remove();
@@ -1853,18 +1853,19 @@ function updateTreeChart(data) {
   // Transform flat treeData into hierarchical structure
   const hierarchyData = {
     name: "Total Damage",
-    value: treeData.find((d) => d.label === "Total Damage").value,
+    // value: treeData.find((d) => d.label === "Total Damage").value,
     children: [
       {
         name: "Magic Damage",
-        value: treeData.find((d) => d.label === "Magic Damage").value,
+        // value: treeData.find((d) => d.label === "Magic Damage").value,
         children: [
-          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
+          { name: "Magic Champion Damage", 
+            value: treeData.find((d) => d.label === "Magic Champion Damage").value },
         ],
       },
       {
         name: "Physical Damage",
-        value: treeData.find((d) => d.label === "Physical Damage").value,
+        // value: treeData.find((d) => d.label === "Physical Damage").value,
         children: [
           {
             name: "Physical Champion Damage",
@@ -1874,9 +1875,10 @@ function updateTreeChart(data) {
       },
       {
         name: "True Damage",
-        value: treeData.find((d) => d.label === "True Damage").value,
+        // value: treeData.find((d) => d.label === "True Damage").value,
         children: [
-          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
+          { name: "True Champion Damage", 
+            value: treeData.find((d) => d.label === "True Champion Damage").value },
         ],
       },
     ],
@@ -1888,7 +1890,7 @@ function updateTreeChart(data) {
 
   const root = d3
     .hierarchy(hierarchyData)
-    .sum((d) => d.value || 0.01) // Set the value for the hierarchy layout
+    .sum((d) => d.value) // Set the value for the hierarchy layout
     .sort((a, b) => b.height - a.height || b.value - a.value); // Optional sorting
 
   console.log("root", root);
@@ -1909,7 +1911,7 @@ function updateTreeChart(data) {
   const color = d3
     .scaleLinear()
     //0 to treeData.values max
-    .domain([0, d3.max(treeData, (d) => d.value)])
+    .domain([0, d3.max(root.leaves(), (d) => d.value)])
     .range(["white", "#85d0ff"]);
 
   // Create groups for each node
@@ -1942,9 +1944,10 @@ function updateTreeChart(data) {
     .attr("y", 14)
     .style("font-size", "12px")
     .text((d) => d.data.name)
+    //wrap overflow text
     .append("tspan")
     .attr("x", 4)
-    .attr("y", 25)
+    .attr("y", 30)
     .text((d) => d.value);
 
   console.log("text");
