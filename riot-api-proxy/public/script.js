@@ -1859,8 +1859,7 @@ function updateTreeChart(data) {
         name: "Magic Damage",
         // value: treeData.find((d) => d.label === "Magic Damage").value,
         children: [
-          { name: "Magic Champion Damage", 
-            value: treeData.find((d) => d.label === "Magic Champion Damage").value },
+          { name: "Magic Champion Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value },
         ],
       },
       {
@@ -1877,8 +1876,7 @@ function updateTreeChart(data) {
         name: "True Damage",
         // value: treeData.find((d) => d.label === "True Damage").value,
         children: [
-          { name: "True Champion Damage", 
-            value: treeData.find((d) => d.label === "True Champion Damage").value },
+          { name: "True Champion Damage", value: treeData.find((d) => d.label === "True Champion Damage").value },
         ],
       },
     ],
