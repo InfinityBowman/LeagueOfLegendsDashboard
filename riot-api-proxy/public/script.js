@@ -949,6 +949,10 @@ function updateDualBarChart(data) {
       const match = data.singleMatchData[i];
       const playerData = match.info.participants.find((participant) => participant.puuid === puuid);
 
+      if (selectedChampion !== null && playerData.championName !== selectedChampion) {
+        continue;
+      }
+
       //find opponent w/ matching lane
       const opponentData = match.info.participants.find(
         (participant) => participant.individualPosition === playerData.individualPosition && participant.puuid !== puuid
@@ -1035,18 +1039,6 @@ function updateDualBarChart(data) {
       { label: "Time Dead", value: opponentData.totalTimeSpentDead },
     ];
   }
-
-  //selected match data
-  let dataExample = [
-    { label: "Kills", value: 50 },
-    { label: "Deaths", value: 30 },
-    { label: "Assists", value: 70 },
-    { label: "Damage", value: 90 },
-    { label: "Healing", value: 20 },
-    { label: "Gold", value: 60 },
-    { label: "Vision", value: 40 },
-    { label: "Objectives", value: 80 },
-  ];
 
   //chat gpt aided in generation, improvements by us
 
