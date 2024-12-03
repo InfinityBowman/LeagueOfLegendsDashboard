@@ -6,6 +6,8 @@ To run project:
   
   run: "node server.js" in terminal
 
+  pull up http://localhost:3000/ on a web browser
+
   click submit with autofilled username and tagline
 
 project video:
