@@ -1,11 +1,9 @@
 const express = require("express");
 const axios = require("axios");
 const path = require("path");
-const { match } = require("assert");
 const app = express();
 const port = 3010;
 
-// Replace with your API key
 const RIOT_API_KEY = "RGAPI-c063d099-24de-457d-8fe4-52d0637b3e51";
 
 // Serve static files
