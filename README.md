@@ -5,6 +5,8 @@ Dashboard for League of Legends match data built using D3.js and NodeJS with Exp
 
 To run project:
 
+-install dependencies
+
 -change directory to riot-api-proxy
 
 -run: "node server.js" in terminal
