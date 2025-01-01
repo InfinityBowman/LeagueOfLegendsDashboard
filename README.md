@@ -1,6 +1,7 @@
 Dashboard for League of Legends match data built using D3.js and NodeJS with Express and Axios to fetch live summoner data from the Riot API.
 
-![League Dashboard Demo](./League-Dashboard-Demo.gif)
+
+<img src="./League-Dashboard-Demo.gif" width="600">
 
 To run project:
 
