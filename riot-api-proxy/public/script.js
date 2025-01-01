@@ -172,8 +172,7 @@ function setup() {
     .attr("width", CHART_WIDTH)
     .attr("height", CHART_HEIGHT)
     .append("g")
-    .attr("transform", `translate(${15}, ${0})`);;
-
+    .attr("transform", `translate(${15}, ${0})`);
 }
 
 const format = (value) => {
@@ -1093,7 +1092,10 @@ function updateDualBarChart(data) {
     .range([0, CHART_WIDTH])
     .padding(0.2);
 
-  const yScale = d3.scaleLinear().domain([0, 100]).range([CHART_HEIGHT-50, 0]);
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, 100])
+    .range([CHART_HEIGHT - 50, 0]);
 
   // Add top x-axis
   chartGroup
@@ -1108,7 +1110,7 @@ function updateDualBarChart(data) {
   // Add bottom x-axis
   chartGroup
     .append("g")
-    .attr("transform", `translate(0, ${CHART_HEIGHT-50})`)
+    .attr("transform", `translate(0, ${CHART_HEIGHT - 50})`)
     .call(d3.axisBottom(xScale).tickSize(0))
     .selectAll("text")
     .attr("transform", "rotate(-30)")
@@ -1169,7 +1171,9 @@ function updateDualBarChart(data) {
       tooltip
         .html(() => {
           if (selectedMatch == null) {
-            return `<div>Opponent's Average: ${format(d.opponentValue)}</div><div>Your Average: ${format(d.selfValue)}</div>`;
+            return `<div>Opponent's Average: ${format(d.opponentValue)}</div><div>Your Average: ${format(
+              d.selfValue
+            )}</div>`;
           } else {
             return `<div>Opponent: ${d.opponentValue}</div><div>You: ${d.selfValue}</div>`;
           }
@@ -1189,10 +1193,10 @@ function updateDualBarChart(data) {
       tooltip.transition().duration(200).style("opacity", 0);
     });
 
-    svgDualBar.append("rect").attr("x", -50).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
-    svgDualBar.append("text").attr("x", -20).attr("y", 225).attr("font-size", 12).text("You").style("fill", "white");
-    svgDualBar.append("rect").attr("x", 20).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
-    svgDualBar.append("text").attr("x", 50).attr("y", 225).attr("font-size", 12).text("Opponent").style("fill", "white");
+  svgDualBar.append("rect").attr("x", -50).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#85d0ff");
+  svgDualBar.append("text").attr("x", -20).attr("y", 225).attr("font-size", 12).text("You").style("fill", "white");
+  svgDualBar.append("rect").attr("x", 20).attr("y", 210).attr("width", 20).attr("height", 20).attr("fill", "#e54787");
+  svgDualBar.append("text").attr("x", 50).attr("y", 225).attr("font-size", 12).text("Opponent").style("fill", "white");
 }
 
 function updateRadarChart(data) {
@@ -1593,7 +1597,6 @@ function updateRadarChart(data) {
 }
 
 function updateTreeChart(data) {
-
   let treeData, dataTotals;
 
   let count = 0;
@@ -1671,10 +1674,7 @@ function updateTreeChart(data) {
       {
         name: "Magic Damage",
         // value: treeData.find((d) => d.label === "Magic Damage").value,
-        children: [
-          { name: "Magic Damage", 
-            value: treeData.find((d) => d.label === "Magic Champion Damage").value },
-        ],
+        children: [{ name: "Magic Damage", value: treeData.find((d) => d.label === "Magic Champion Damage").value }],
       },
       {
         name: "Physical Damage",
@@ -1689,10 +1689,7 @@ function updateTreeChart(data) {
       {
         name: "True Damage",
         // value: treeData.find((d) => d.label === "True Damage").value,
-        children: [
-          { name: "True Damage", 
-            value: treeData.find((d) => d.label === "True Champion Damage").value },
-        ],
+        children: [{ name: "True Damage", value: treeData.find((d) => d.label === "True Champion Damage").value }],
       },
     ],
   };
@@ -1718,7 +1715,6 @@ function updateTreeChart(data) {
     .paddingOuter(0);
 
   treemapLayout(root);
-
 
   // Define a color scale for the tree map white to #85d0ff
   const color = d3
@@ -1751,19 +1747,19 @@ function updateTreeChart(data) {
   cell.each(function (d) {
     const rectWidth = d3.select(this).select("rect").attr("width"); // Get rectangle width
     const textGroup = d3.select(this);
-  
+
     // Create a temporary text element to measure text width
     const tempText = textGroup
       .append("text")
       .style("font-size", "12px")
       .style("visibility", "hidden") // Make it invisible
       .text(d.data.name);
-  
+
     const ellipsis = "...";
     const ellipsisWidth = tempText.text(ellipsis).node().getComputedTextLength(); // Measure ellipsis width
     let label = d.data.name;
     let truncatedLabel = label;
-  
+
     // Iteratively truncate the label until it fits within the rectangle
     tempText.text(label); // Reset to full text for measurement
     let textWidth = tempText.node().getComputedTextLength();
@@ -1773,58 +1769,48 @@ function updateTreeChart(data) {
       textWidth = tempText.node().getComputedTextLength();
     }
     label = truncatedLabel + (truncatedLabel.length < label.length ? ellipsis : "");
-  
+
     tempText.remove(); // Remove the temporary text element
-  
+
     // Add the truncated label
-    textGroup
-      .append("text")
-      .attr("x", 4)
-      .attr("y", 14)
-      .style("font-size", "12px")
-      .text(label);
-  
+    textGroup.append("text").attr("x", 4).attr("y", 14).style("font-size", "12px").text(label);
+
     // Add the value below the label
-    textGroup
-      .append("text")
-      .attr("x", 4)
-      .attr("y", 30)
-      .style("font-size", "12px")
-      .text(d.value);
+    textGroup.append("text").attr("x", 4).attr("y", 30).style("font-size", "12px").text(d.value);
   });
 
   // Add tooltips
   cell.append("title").text((d) => `${d.data.name}\n${d.value}`);
 
   cell
-  .selectAll("rect")
-  .on("mouseover", function (event, d) {
-    // Hover effect
-    if (d.wins + d.losses === 0) return;
-    d3.select(this).classed("scaled", true);
-    tooltip.transition().duration(50).style("opacity", 1);
-    tooltip
-      .html(() => {
-        if (selectedMatch == null) {
-          return `<div>Average ${d.data.name}: ${format(d.data.value)}</div>`;
-        } else {
-          return `<div>${d.data.name}: ${format(d.data.value)}</div>`;
-        }
-      })
-      .style("left", event.pageX + 10 + "px")
-      .style("top", event.pageY - 28 + "px")
-      .style("background-color", "rgba(0, 0, 0, 0.8)");
-  })
-  .on("mousemove", function (event) {
-    tooltip
-      .style("left", event.pageX + 10 + "px") // Update position on move
-      .style("top", event.pageY - 28 + "px");
-  })
-  .on("mouseout", function () {
-    // End hover effect
-    d3.select(this).classed("scaled", false);
-    tooltip.transition().duration(200).style("opacity", 0);
-  });
+    .selectAll("rect")
+    .on("mouseover", function (event, d) {
+      // Hover effect
+      if (d.wins + d.losses === 0) return;
+      d3.select(this).classed("scaled", true);
+      tooltip.transition().duration(50).style("opacity", 1);
+      tooltip
+        .html(() => {
+          if (selectedMatch == null) {
+            return `<div>Average ${d.data.name}: ${format(d.data.value)}</div>`;
+          } else {
+            return `<div>${d.data.name}: ${format(d.data.value)}</div>`;
+          }
+        })
+        .style("left", event.pageX + 10 + "px")
+        .style("top", event.pageY - 28 + "px")
+        .style("background-color", "rgba(0, 0, 0, 0.8)");
+    })
+    .on("mousemove", function (event) {
+      tooltip
+        .style("left", event.pageX + 10 + "px") // Update position on move
+        .style("top", event.pageY - 28 + "px");
+    })
+    .on("mouseout", function () {
+      // End hover effect
+      d3.select(this).classed("scaled", false);
+      tooltip.transition().duration(200).style("opacity", 0);
+    });
 
   //add a horizontal gradient legend generated by copilot
   const defs = svgTree.append("defs");
@@ -1836,14 +1822,8 @@ function updateTreeChart(data) {
     .attr("y1", "0%")
     .attr("x2", "100%")
     .attr("y2", "0%");
-  linearGradient
-    .append("stop")
-    .attr("offset", "0%")
-    .attr("stop-color", "white");
-  linearGradient
-    .append("stop")
-    .attr("offset", "100%")
-    .attr("stop-color", "#85d0ff");
+  linearGradient.append("stop").attr("offset", "0%").attr("stop-color", "white");
+  linearGradient.append("stop").attr("offset", "100%").attr("stop-color", "#85d0ff");
 
   svgTree
     .append("rect")
@@ -1853,13 +1833,7 @@ function updateTreeChart(data) {
     .attr("height", 20)
     .style("fill", "url(#linear-gradient)");
 
-  svgTree
-    .append("text")
-    .attr("x", 0)
-    .attr("y", 285)
-    .text("0")
-    .style("fill", "white")
-    .style("font-size", "12px");
+  svgTree.append("text").attr("x", 0).attr("y", 285).text("0").style("fill", "white").style("font-size", "12px");
 
   svgTree
     .append("text")
